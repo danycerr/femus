@@ -32,3 +32,10 @@
 *.med
 *.h5
 *.xmf
+
+*opt
+*dbg
+.depend*
+*.kdev4*
+
+
