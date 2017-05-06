@@ -1,0 +1,252 @@
+// libc+++ include
+#include <iostream>
+#include <cstdlib>
+#include <sstream>
+#include <iomanip>
+#include<map>
+// configuration files -------------------------
+#include   "Printinfo_conf.h"
+
+// LibMesh library included ------------------------------
+// #ifdef LM_INIT
+// #include "libmesh.h" // for Libmesh library
+// #endif
+
+// solver library -------------------------------------
+#include  "Solverlib_conf.h"  // Solver library options 
+// Petsc
+#ifdef HAVE_PETSCM
+#include "petsc.h" // for Petsc solver
+#endif
+// Mpi
+#ifdef HAVE_MPI
+#include <mpi.h>   //For MPI_COMM_WORLD
+#endif
+
+// include local class
+#include "MGFemusInit.h"
+#include "MGUtils.h"
+#include "MGSystem.h"
+#include "MGGeomEl.h"
+#include "MGMesh.h"
+#include "MGFEMap.h"
+#include "MGFE.h"
+#include "MGEquationsSystem.h"
+#include "MGTimeLoop.h"
+#include "FEMUS.h"
+#include "InterfaceProjection.h"
+#include <EquationSystemsExtendedM.h>
+// #include <EquationSystemsExtendedM.h>
+#ifdef HAVE_MED
+#include "MEDCouplingUMesh.hxx"
+#include "MEDCouplingFieldDouble.hxx"
+#include "MEDLoader.hxx"
+#endif
+/// Set up
+// =======================================
+// Main program
+// =======================================
+
+int main(int argc, char** argv) {
+  
+  argc = argc ; argv=argv;  // no unused warning
+ 
+  std::cout<<" ============ MGUtils ===================================== \n";
+  std::cout<<" =========================================================== \n";
+  // setting MGUtils -> parameters and file name ------------------------
+  std::vector<MGUtils*> mgutils;
+  std::string MeshFileName[NUM_MESH];
+  std::string MeshFileName_Gen[NUM_MESH];  
+
+  for(int i_mesh=0; i_mesh< NUM_MESH; i_mesh++) {
+    // MGUtils constructor ----------------------------------------------------
+    mgutils.push_back(new MGUtils(i_mesh+1));
+    // mesh names -------------------------------------------------------------
+    MeshFileName[i_mesh]  = mgutils[i_mesh]->get_file("F_MESH_READ"); 
+    int posP            = MeshFileName[i_mesh].find(".");  
+    MeshFileName_Gen[i_mesh]    = MeshFileName[i_mesh].substr(0,posP) + "_gen.med" ;    
+    
+    std::cout<<" \n P mesh file "<< i_mesh+1 << "= "<< mgutils[i_mesh]->_mesh_dir + MeshFileName_Gen[i_mesh]<<"\n "; 
+  }
+  std::cout<<" ============ end loop mesh ================================ \n";
+  std::cout<<" =========================================================== \n";
+  
+  // FEM class -----------------------------------------------------------
+  MGFEMap *mgfemap; mgfemap=new MGFEMap();
+  
+  // MGFEMap mg_femap;
+  MGFE *dfe_q;    
+  dfe_q=new MGFE(2,ELTYPE); 
+  dfe_q->init_qua();
+  mgfemap->set_FE(dfe_q); // initialize quadratic fem
+  
+  MGFE *dfe_l;  
+  dfe_l=new MGFE(1,ELTYPE); 
+  dfe_l->init_lin();
+  mgfemap->set_FE(dfe_l); // initialize linear fem
+  
+  MGFE *dfe_k; 
+  dfe_k=new MGFE(0,ELTYPE);  
+  dfe_k->init_pie();
+  mgfemap->set_FE(dfe_k); // initialize piecewise fem
+
+  // MGGeomEl ----------------------------------------------------------
+  MGGeomEl *mggeomel;  mggeomel=new  MGGeomEl();
+  
+  // system problem =========================================================
+  std::vector<FIELDS> myproblemP1; 
+
+#ifdef NS_EQUATIONS
+  myproblemP1.push_back(NS_F);
+#endif
+#ifdef TBK_EQUATIONS
+  myproblemP1.push_back(K_F);
+#endif
+#ifdef TTBK_EQUATIONS
+  myproblemP1.push_back(KTT_F);
+#endif   
+#ifdef T_EQUATIONS
+  myproblemP1.push_back(T_F);
+#endif
+
+  MMed *interfaces;
+  
+  std::vector<FEMUS*> FEMusProblems;
+  FEMusProblems.resize(NUM_MESH);
+  
+  for(int i=0; i<NUM_MESH; i++){
+//     string name = std::to_string(i);
+//     FEMUS name;
+    FEMusProblems[i] = new FEMUS;
+    FEMusProblems[i] -> init_param(*mgutils[i],i);
+    FEMusProblems[i] -> init_fem(*mggeomel,*mgfemap);                 // init fem      
+    FEMusProblems[i] -> setMesh();                                    // set MGmesh   
+    FEMusProblems[i] -> setSystem(myproblemP1);                       // set system
+  }
+  
+  for(int nDom=0; nDom<NUM_MESH; nDom++){
+    std::vector<std::string> meshNames = MEDLoader::GetMeshNames(mgutils[nDom]->_mesh_dir +  MeshFileName[nDom]);
+    std::vector<std::string> GroupNames = MEDLoader::GetMeshGroupsNames(mgutils[nDom]->_mesh_dir +  MeshFileName[nDom], meshNames[0]);
+    int nGroups0 = GroupNames.size();
+    std::cout<<"\033[1;31m Total number of system of equations: "<<myproblemP1.size()
+	    <<" number of FEMus problems "<<FEMusProblems.size()<<"\033[0m \n\n";
+    if(nGroups0>0.5) {
+      std::vector<int> NumericGroupNames;
+      for(int i=0; i< nGroups0; i++) NumericGroupNames.push_back(std::stoi(GroupNames[i]));
+      sort(NumericGroupNames.begin(), NumericGroupNames.end());
+      bool VolumeGroup = (NumericGroupNames[0]<10 ? true:false);
+      
+      if(!VolumeGroup) std::cout<<"\033[1;34m -------------------- Attention -------------------- \n "
+				<<"\t\t No volume group found \n"
+				<<"\t\t Interpolation cannot be performed \033[0m";
+    
+    
+      
+    
+      if(VolumeGroup){
+	std::cout << "\033[1;31m ============================================================= \033[0m \n" ;
+	std::cout << "\033[1;31m ********************** INTERPOLATION STEP ******************* \033[0m \n" ;  
+	std::cout << "\033[1;31m ============================================================= \033[0m \n" ;  
+	std::cout<<"\033[1;33m The target mesh is " <<MeshFileName[nDom]<<" with volume group id "<< NumericGroupNames[0] <<"\033[0m\n";
+	
+	int InterfaceId = 222;
+	FEMusProblems[nDom]->init_interface(InterfaceId,NumericGroupNames[0],2,MeshFileName_Gen[nDom]);
+	
+	const  ParaMEDMEM::MEDCouplingUMesh * TargetV = FEMusProblems[nDom]->getUMesh(InterfaceId);  
+	//////////////////////////////////////////////////////////////////////////////////
+	/////				READ SOLUTION IN MED FILE
+	//////////////////////////////////////////////////////////////////////////////////
+
+	
+	std::string SourceFile = "/SourceField" + std::to_string(nDom) + ".med";
+	std::string QuadFieldsFile = mgutils[nDom]->_app_dir +  SourceFile;
+	
+	std::cout<<" Reading solution from fields in " <<QuadFieldsFile<<std::endl;
+	
+	std::vector<std::string> FieldNames = MEDLoader::GetAllFieldNames(QuadFieldsFile);
+	std::vector<std::string> MeshNames = MEDLoader::GetMeshNames(QuadFieldsFile);
+
+    
+	const  ParaMEDMEM::MEDCouplingUMesh * SourceV = MEDLoader::ReadUMeshFromFile(QuadFieldsFile, 0);  
+	double time = MEDLoader::GetTimeAttachedOnFieldIteration(QuadFieldsFile,FieldNames[0],-1,-1);
+	std::cout<<"\n Time read from file SourceField0.med t = "<<time<<"\n";
+	
+	BoundInterp VOL = BoundInterp(SourceV,TargetV,1);   
+      
+	for(int l=0; l<FieldNames.size(); l++) {
+	  std::cout<<"\033[1;36m\n Interpolation of field "<<FieldNames[l]<<"\033[0m\n";
+    
+	  ParaMEDMEM::MEDCouplingFieldDouble* SourceField = 
+	    MEDLoader::ReadField(ParaMEDMEM::ON_NODES,QuadFieldsFile,MeshNames[0],0,FieldNames[l],-1,-1);      
+	  int order = 2;
+	  if (FieldNames[l]=="NSP") order = 1;
+	  ParaMEDMEM::MEDCouplingFieldDouble * TargetField = VOL.InterpolatedField(SourceField,order);
+	  
+	  FEMusProblems[nDom]->setFieldBoundaryValues(InterfaceId,0,TargetField);
+	  FEMusProblems[nDom]->write_Boundary_value(InterfaceId,FieldNames[l],1);
+	  
+	  double InitIntegVal = SourceField->getWeightedAverageValue(0,0);
+	  double FinalIntegVal = TargetField->getWeightedAverageValue(0,0);
+
+	  std::cout<<std::setprecision(5)<<" Initial integral value, calculated with MED function \t\t"<< InitIntegVal<<std::endl;
+	  std::cout<<std::setprecision(5)<<" Integral value after interpolation, calculated with MED \t"<< FinalIntegVal<<std::endl;
+	  std::cout<<std::setprecision(2)<<" Percentage of integral value variation from initial value\t \033[0;36m"
+					<<100.*(FinalIntegVal-InitIntegVal)/InitIntegVal<<" % \033[0m"<<std::endl;
+	  std::cout<<"---------------------------------------------------------------------------------";
+	  SourceField->decrRef();
+	}
+    
+	/*============================ Solution of P1 ==================================*/	 
+	FEMusProblems[nDom]->dummy_step(0,1000,1,time);    // solving P
+	std::cout << "\033[1;31m ============================================================= \033[0m \n" ;
+	std::cout << "\033[1;31m ********************** SOLUTION PRINTED ********************* \033[0m \n" ;  
+	std::cout << "\033[1;31m ============================================================= \033[0m \n" ;  
+	/*==============================================================================*/    
+
+	//////////////////////////////////////////////////////////////////////////////////
+	/////				END TIME LOOP
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	NumericGroupNames.clear();
+	GroupNames.clear();
+	MeshNames.clear();
+	FieldNames.clear();
+      }
+    }
+    
+    else std::cout<<"\033[1;31m -------------------- Attention -------------------- \n  \t\t No group found \n\t\t Interpolation cannot be performed \033[0m";
+    
+  }
+  
+  // Wait all processes
+  MPI_Barrier( MPI_COMM_WORLD);
+  
+  
+  // Terminating FEMUS problems from last fo first
+  for(int nDom=0; nDom<NUM_MESH; nDom++) FEMusProblems[NUM_MESH-nDom]->terminate();
+  FEMusProblems.clear();
+  std::string AppDir=mgutils[0]->_app_dir;
+
+  
+  // clean --------------------------------------------------------------------
+  mgutils.clear();
+  
+  delete dfe_q;  
+  delete dfe_l;   
+  delete dfe_k;  
+  delete mggeomel; 
+  delete mgfemap;
+  
+  std::cout<<"\033[1;31m \n\n\n \
+  In order to use the Interpolation application you need to define \n \
+   \t\"HAVE_MED\" \n \
+   inside the file $"<< AppDir<<"/DATA/Solverlib_conf.h \n\
+   -) Make a resu_clean \n\
+   -) Set restart to 0    \n\
+   -) Set the new meshes in \"param_files\"     \n\
+   -) Run gencase with n processors          \n\
+   -) Run Interpolator with n processors     \n\
+   -) Set restart to 1000                   \n\
+   -) Restart your application \033[0m \n \n\n\n";
+  return 0;
+}
