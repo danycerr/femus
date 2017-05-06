@@ -27,3 +27,8 @@
 *.exe
 *.out
 *.app
+
+# Resuts
+*.med
+*.h5
+*.xmf
