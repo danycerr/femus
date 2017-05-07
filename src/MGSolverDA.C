@@ -51,7 +51,7 @@
 
 /// This function is the MGSolDA constructor I
 MGSolDA::MGSolDA(
-  MGEquationsSystem& mg_equations_map_in, //
+  MGEquationsSystem &mg_equations_map_in, //
   const int nvars_in[],                // # of quad variables
 //   const int nvarsl_in,                // # of linear variables
   std::string eqname_in,               // equation name
@@ -90,7 +90,7 @@ MGSolDA::MGSolDA(
     _var_names[iname]=ostr.str();
     _refvalue[iname]=1;
   }
-  
+
   return;
 }
 
@@ -98,7 +98,7 @@ MGSolDA::MGSolDA(
 // ==================================================
 /// This functions set the external fields:
 // ==================================================
-void MGSolDA::set_ext_fields(const std::vector<FIELDS> & pbName) {
+void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
 
   /// A) set up _mg_eqs
   // external system and index vectors
@@ -110,47 +110,47 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> & pbName) {
       _data_eq[deg].indx_ub[kl]=-1;
       _data_eq[deg].tab_eqs[kl]=-1;
       for(int kk=0; kk<NDOF_FEM; ++kk)  {
-        _data_eq[deg].ub[kk+kl*NDOF_FEM]=0.;  // data 
+        _data_eq[deg].ub[kk+kl*NDOF_FEM]=0.;  // data
       }
     }
   }
- // start index K from 0, L from 0, Q from DIMENSION (coordinates+ q variable) 
+// start index K from 0, L from 0, Q from DIMENSION (coordinates+ q variable)
   _data_eq[0].indx_ub[0]=0;         //_data_eq[0].n_eqs=0; // piecewice constant  (0)
   _data_eq[1].indx_ub[0]=0;         //_data_eq[1].n_eqs=0; // piecewice linear    (1)
   _data_eq[2].indx_ub[0]=0*DIMENSION; //_data_eq[2].n_eqs=0; // piecewice quadratic (2)
 
   /// B) List of external equations:
- int n_equations=pbName.size();
- 
- 
+  int n_equations=pbName.size();
+
+
   //==============================================================================================
   // Piecewise constant (k)  -> _data_eq[0])   ---------------------------------------------------
   //==============================================================================================
   int n_index=0;//  piecewise constant index for _ub
 #ifdef DA1_EQUATIONS
-  for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== DA_F){
-  _data_eq[0].tab_eqs[DA_P]=n_index;                      //  table
-  _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
-  _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+_nvars[0];  // _data_eq[2].ub index
-  _data_eq[0].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
-  }
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
+      _data_eq[0].tab_eqs[DA_P]=n_index;                      //  table
+      _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
+      _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+_nvars[0];  // _data_eq[2].ub index
+      _data_eq[0].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
+    }
 
 //  #endif
 #endif
 #ifdef COLOR_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FS_F){
-    _data_eq[0].tab_eqs[CO_F]=n_index;                      //  table
-    _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("CO_F"); //Navier-Stokes equation pointer
-    _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+1;//_nvars[0];  // _data_eq[2].ub index
-    _data_eq[0].n_eqs++;  // number of quadratic system
-    n_index++; // update counter
-}
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FS_F) {
+      _data_eq[0].tab_eqs[CO_F]=n_index;                      //  table
+      _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("CO_F"); //Navier-Stokes equation pointer
+      _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+1;//_nvars[0];  // _data_eq[2].ub index
+      _data_eq[0].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
+    }
 #endif
 // #ifdef NS_EQUATIONS
 // if(NDOF_K==1)
-// for(int iname=0;iname<n_equations;iname++) 
-// if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F){ 
+// for(int iname=0;iname<n_equations;iname++)
+// if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F){
 // // #if (NS_EQUATIONS%2==0)  /// [1] Pressure -> (NSP_EQUATIONS)
 //   _data_eq[0].tab_eqs[P_F]=n_index;                      //  table
 //   _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0"); //Navier-Stokes equation pointer
@@ -160,49 +160,62 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FS_F){
 // // #endif
 //  }
 // #endif
+#ifdef FSI_EQUATIONS
+if(NDOF_K==1)
+for(int iname=0;iname<n_equations;iname++)
+if(pbName[iname]== FS_F || pbName[iname]==FSX_F || pbName[iname]==FSY_F || pbName[iname]==FSZ_F){
+// #if (NS_EQUATIONS%2==0)  /// [1] Pressure -> (NSP_EQUATIONS)
+  _data_eq[0].tab_eqs[P_F]=n_index;                      //  table
+  _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0"); //Navier-Stokes equation pointer
+  _data_eq[0].indx_ub[n_index+1] =_data_eq[0].indx_ub[n_index]+1;  // _data_eq[2].ub index
+  _data_eq[0].n_eqs++;  // number of quadratic system
+  n_index++; // update counter
+// #endif
+ }
+#endif
 
   //===============================================================================================
   // Linear -> _data_eq[1])  ----------------------------------------------------------------------
   //===============================================================================================
   n_index=0;//  linear index for _ub
 #ifdef NS_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F){ 
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
 #if (NS_EQUATIONS%2==0)  /// [1] Pressure -> (NSP_EQUATIONS)
-  _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS2P"); //Navier-Stokes equation pointer
-  _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-  _data_eq[1].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
+      _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+      _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS2P"); //Navier-Stokes equation pointer
+      _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+      _data_eq[1].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
 #endif
- }
+    }
 #endif
 #ifdef NSA_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== FS_F){ 
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== FS_F) {
 #if (NSA_EQUATIONS%2==0)  /// [1] Pressure -> (NSP_EQUATIONS)
-  _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSAP"); //Navier-Stokes equation pointer
-  _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-  _data_eq[1].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
+      _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+      _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSAP"); //Navier-Stokes equation pointer
+      _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+      _data_eq[1].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
 #endif
- }
+    }
 #endif
 // --------------  FSI ------------------------------
 #ifdef FSI_EQUATIONS
 #if (FSI_EQUATIONS%2==0)
-for(int iname=0;iname<n_equations;iname++){ 
+  for(int iname=0; iname<n_equations; iname++) {
 //   if(pbName[iname]== 100){
 //  #if (FSIP_EQUATIONS%2==0)  /// [1] Pressure -> (FSIP_EQUATIONS)
-  _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIP"); //Navier-Stokes equation pointer
-  _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-  _data_eq[1].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
+    _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIP"); //Navier-Stokes equation pointer
+    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+    _data_eq[1].n_eqs++;  // number of quadratic system
+    n_index++; // update counter
 //  #endif
 // }
-} 
+  }
 #endif
 #endif
 #ifdef FSIA_EQUATIONS
@@ -215,31 +228,31 @@ for(int iname=0;iname<n_equations;iname++){
 #endif
 #endif
 #ifdef DA1_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== DA_F){
-  _data_eq[1].tab_eqs[DA_F]=n_index;                      //  table
-  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
-  _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+_nvars[1];  // _data_eq[2].ub index
-  _data_eq[1].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
-}
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
+      _data_eq[1].tab_eqs[DA_F]=n_index;                      //  table
+      _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
+      _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+_nvars[1];  // _data_eq[2].ub index
+      _data_eq[1].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
+    }
 //  #endif
 #endif
 #ifdef ALFA_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== 100){
-  _data_eq[1].tab_eqs[0]=n_index;                      //  table
-  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("ALFA"); //Navier-Stokes equation pointer
-  _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+_nvars[1];  // _data_eq[2].ub index
-  _data_eq[1].n_eqs++;  // number of quadratic system
-  n_index++; // update counter
-}
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== 100) {
+      _data_eq[1].tab_eqs[0]=n_index;                      //  table
+      _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("ALFA"); //Navier-Stokes equation pointer
+      _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+_nvars[1];  // _data_eq[2].ub index
+      _data_eq[1].n_eqs++;  // number of quadratic system
+      n_index++; // update counter
+    }
 #endif
-#ifdef T_COUP_EQUATIONS 
-#if T_COUP_EQUATIONS==2 
-    _data_eq[1].tab_eqs[DA_F]=n_index;                                    // table
-    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_coup");           // equation pointer
-    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;    // _data_eq[2].ub index
-    _data_eq[1].n_eqs++;                                               // number of quadratic system
-    n_index++;                                                         // update counter
+#ifdef T_COUP_EQUATIONS
+#if T_COUP_EQUATIONS==2
+  _data_eq[1].tab_eqs[DA_F]=n_index;                                    // table
+  _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_coup");           // equation pointer
+  _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;    // _data_eq[2].ub index
+  _data_eq[1].n_eqs++;                                               // number of quadratic system
+  n_index++;                                                         // update counter
 #endif
 #endif
 
@@ -251,105 +264,105 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== 100){
   n_index=0; //  quadratic index for _ub
 
 #ifdef DA1_EQUATIONS  /// [4] DA -> 2 (DA_EQUATION)
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== DA_F){
-  _data_eq[2].tab_eqs[DA_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+_nvars[2]; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;       
-}// update counter
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
+      _data_eq[2].tab_eqs[DA_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+_nvars[2]; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+    }// update counter
 #endif
 // -------------------- NS ------------------------------------------------------------------------
 #ifdef NS_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F){ 
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
 #if NS_EQUATIONS==2
-  _data_eq[2].tab_eqs[NSX_F]=n_index;                           // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0X");        // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                           // number of quadratic system
-  n_index++;   // update counter
-  _data_eq[2].tab_eqs[NSY_F]=n_index;                            // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0Y");         // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                           // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[NSX_F]=n_index;                           // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0X");        // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                           // number of quadratic system
+      n_index++;   // update counter
+      _data_eq[2].tab_eqs[NSY_F]=n_index;                            // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0Y");         // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                           // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-  _data_eq[2].tab_eqs[NSZ_F]=n_index;                            // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0Z");         // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                           // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[NSZ_F]=n_index;                            // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0Z");         // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;// _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                           // number of quadratic system
+      n_index++;
 #endif
 #else
-  _data_eq[2].tab_eqs[NS_F]=n_index;                                   // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION;// _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
+      _data_eq[2].tab_eqs[NS_F]=n_index;                                   // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION;// _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
 #endif
-}
+    }
 #endif
 // -------------------- NS adjoint ---------------------------------------------------------------------
 #ifdef NSA_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== FS_F){ 
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== FS_F) {
 #if NSA_EQUATIONS==2
-  _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0X");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
-  _data_eq[2].tab_eqs[FS_F+1]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0Y");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0X");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
+      _data_eq[2].tab_eqs[FS_F+1]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0Y");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-  _data_eq[2].tab_eqs[FS_F+2]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0Z");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FS_F+2]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0Z");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #endif
 #else
-  _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
+      _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSA0");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
 #endif
-}
+    }
 #endif
 
 #ifdef SM_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== 100){
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== 100) {
 #if SM_EQUATIONS==2
-  _data_eq[2].tab_eqs[NSX_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0X");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
-  _data_eq[2].tab_eqs[NSY_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0Y");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[NSX_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0X");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
+      _data_eq[2].tab_eqs[NSY_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0Y");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-  _data_eq[2].tab_eqs[NSZ_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0Z");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[NSZ_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0Z");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #endif
 #else    /// [0] SM -> 
-  _data_eq[2].tab_eqs[NS_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
+      _data_eq[2].tab_eqs[NS_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SM0");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
 #endif
-}
+    }
 #endif
 
 
@@ -357,55 +370,55 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== 100){
 // ==========================       FSI        =======================================================
 // ===================================================================================================
 #ifdef FSI_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FS_F){
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FS_F) {
 #if FSI_EQUATIONS==2
-  _data_eq[2].tab_eqs[FSX_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0X");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
-  _data_eq[2].tab_eqs[FSY_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0Y");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FSX_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0X");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
+      _data_eq[2].tab_eqs[FSY_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0Y");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-  _data_eq[2].tab_eqs[FSZ_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0Z");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FSZ_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0Z");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #endif
 #else    /// [0] FSI -> 
-    _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
-    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0");                // FSI equation pointer
-    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
-    _data_eq[2].n_eqs++;                                               // number of quadratic system
-    n_index++;   // update counter
+      _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSI0");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
 
 #endif
 #ifdef DS_EQUATIONS
 // if(_mgutils.get_file("MESHNUMBER")=="mesh1") {
-    _data_eq[2].tab_eqs[SDSX_F]=n_index;                                  // table
-    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSX");                // Navier-Stokes equation pointer
-    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
-    _data_eq[2].n_eqs++;                                                 // number of quadratic system
-    n_index++;                                                           // update counter
+      _data_eq[2].tab_eqs[SDSX_F]=n_index;                                  // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSX");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                                 // number of quadratic system
+      n_index++;                                                           // update counter
 
-    _data_eq[2].tab_eqs[SDSY_F]=n_index;                                  // table
-    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSY");                // Navier-Stokes equation pointer
-    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
-    _data_eq[2].n_eqs++;                                                 // number of quadratic system
-    n_index++;
+      _data_eq[2].tab_eqs[SDSY_F]=n_index;                                  // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSY");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                                 // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-    _data_eq[2].tab_eqs[SDSZ_F]=n_index;                                  // table
-    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSZ");                // Navier-Stokes equation pointer
-    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
-    _data_eq[2].n_eqs++;                                                 // number of quadratic system
-    n_index++;
+      _data_eq[2].tab_eqs[SDSZ_F]=n_index;                                  // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("SDSZ");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;      // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                                 // number of quadratic system
+      n_index++;
 #endif
 #endif
-    
+
 // #ifdef COLOR_EQUATIONS
 //     _data_eq[2].tab_eqs[CO_F]=n_index;                      //  table
 //     _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("CO_F"); //Navier-Stokes equation pointer
@@ -413,39 +426,39 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FS_F){
 //     _data_eq[2].n_eqs++;  // number of quadratic system
 //     n_index++; // update counter
 // #endif
-}
+    }
 #ifdef FSIA_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FSA_F){
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FSA_F) {
 
 #if FSIA_EQUATIONS==2
-  _data_eq[2].tab_eqs[FSAX_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0X");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;   // update counter
-  _data_eq[2].tab_eqs[FSAY_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0Y");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FSAX_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0X");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
+      _data_eq[2].tab_eqs[FSAY_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0Y");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #if DIMENSION==3
-  _data_eq[2].tab_eqs[FSAZ_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0Z");                // FSI equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
+      _data_eq[2].tab_eqs[FSAZ_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0Z");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
 #endif
-#else  
-    _data_eq[2].tab_eqs[FSA_F]=n_index;                                    // table
-    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0");                // FSI equation pointer
-    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
-    _data_eq[2].n_eqs++;                                               // number of quadratic system
-    n_index++;   // update counter
+#else
+      _data_eq[2].tab_eqs[FSA_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIA0");                // FSI equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;   // update counter
 #endif
-}
-#endif      
-   
-#endif  
+    }
+#endif
+
+#endif
 // ===================================================================================================
 // ==========================    end   FSI        =======================================================
 // ===================================================================================================
@@ -454,155 +467,155 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FSA_F){
 
 
 #ifdef T_EQUATIONS  /// [4] Temperature -> 2 (T_EQUATIONS)
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== T_F){ 
-  _data_eq[2].tab_eqs[T_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T");                // equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          
-                                                  // update counter
-}
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== T_F) {
+      _data_eq[2].tab_eqs[T_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T");                // equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+      // update counter
+    }
 #endif
 #ifdef CTRL_EQUATIONS  /// [4] Temperature -> 2 (T_EQUATIONS)
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== CTR_F){ 
-  _data_eq[2].tab_eqs[CTR_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("CTRL");                // equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          
-                                                  // update counter
-}
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== CTR_F) {
+      _data_eq[2].tab_eqs[CTR_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("CTRL");                // equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+      // update counter
+    }
 #endif
 #ifdef LAP_EQUATIONS  /// [4] Temperature -> 2 (T_EQUATIONS)
-for(int iname=0;iname<n_equations;iname++) 
-if(pbName[iname]== T_F){ 
-  _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("Lap");                // equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;                                                           // update counter
-}
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== T_F) {
+      _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("Lap");                // equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;                                                           // update counter
+    }
 #endif
 // energy boundary control equations
 #ifdef T_ADJ_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== TA_F){
-  _data_eq[2].tab_eqs[TA_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_ad");                // equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;
-}// update counter
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== TA_F) {
+      _data_eq[2].tab_eqs[TA_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_ad");                // equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+    }// update counter
 #endif
 // energy boundary control equations
 #ifdef T_G_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== FS_F){
-  _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_g");                // equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;     
-}// update counter
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FS_F) {
+      _data_eq[2].tab_eqs[FS_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_g");                // equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+    }// update counter
 #endif
 #ifdef T_COUP_EQUATIONS
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== TA_F){
-  _data_eq[2].tab_eqs[TA_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_coup");                // equation pointer
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== TA_F) {
+      _data_eq[2].tab_eqs[TA_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("T_coup");                // equation pointer
 #if T_COUP_EQUATIONS==1
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+2;     // T and T_a in H1
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+2;     // T and T_a in H1
 #else
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;     // Only T_a in H1
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1;     // Only T_a in H1
 #endif
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;  
-}// update counter
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;
+    }// update counter
 #endif
 
 #ifdef TBK_EQUATIONS  // *******************************************************
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== K_F){
-  /// [5] Turbulence k (TBK_EQUATIONS)
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== K_F) {
+      /// [5] Turbulence k (TBK_EQUATIONS)
 #if (TBK_EQUATIONS/2==0)  // k-eq 1-equation model (TBK_EQUATIONS/2=0) 
-  _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K2K");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                            // number of quadratic system
-  n_index++;          // update counter
+      _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K2K");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                            // number of quadratic system
+      n_index++;          // update counter
 #else  // k-eq 2-equation model (TBK_EQUATIONS/2>0) 
-  _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K2K");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TBK_EQUATIONS%2; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          // update counter
+      _data_eq[2].tab_eqs[K_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K2K");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TBK_EQUATIONS%2; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;          // update counter
 
 
 #if (TBK_EQUATIONS%2==0)                   // splitting k-omega
-  /// [6] Turbulence w (TBK_EQUATIONS)
-  _data_eq[2].tab_eqs[EW_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K1W");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;  // update counter
+      /// [6] Turbulence w (TBK_EQUATIONS)
+      _data_eq[2].tab_eqs[EW_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("K1W");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;  // update counter
 #endif    // end splitting coupled
 
 #endif    // end  k-eq 2-equation model
 // #endif  // k-omega
-}
+    }
 #endif  // TBK_EQUATIONS  *******************************************************
 
 #ifdef TBKA_EQUATIONS  // *******************************************************
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== KTT_F){
-  /// [5] Turbulence k (TBK_EQUATIONS)
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== KTT_F) {
+      /// [5] Turbulence k (TBK_EQUATIONS)
 #if (TBKA_EQUATIONS/2==0)  // k-eq 1-equation model (TBK_EQUATIONS/2=0) 
-  _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("KA");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                            // number of quadratic system
-  n_index++;          // update counter
+      _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("KA");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                            // number of quadratic system
+      n_index++;          // update counter
 #else  // k-eq 2-equation model (TBK_EQUATIONS/2>0) 
-  _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("KA");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TBKA_EQUATIONS%2; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          // update counter
-#endif  
-}
+      _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("KA");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TBKA_EQUATIONS%2; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;          // update counter
+#endif
+    }
 #endif  // TBK_EQUATIONS  *******************************************************
 
 #ifdef TTBK_EQUATIONS  // *******************************************************
-for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== KTT_F){
-  /// [7] Turbulence k (TTBK_EQUATIONS)
+  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== KTT_F) {
+      /// [7] Turbulence k (TTBK_EQUATIONS)
 #if (TTBK_EQUATIONS/2==0)  // k-eq 1-equation model (TTBK_EQUATIONS/2=0) 
-  _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          // update counter
+      _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;          // update counter
 #else  // k-eq 2-equation model (TTBK_EQUATIONS/2>0) 
-  _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TTBK_EQUATIONS%2; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;          // update counter
+      _data_eq[2].tab_eqs[KTT_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1+TTBK_EQUATIONS%2; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;          // update counter
 
 #if (TTBK_EQUATIONS%2==0)                   // splitting k-omega
-  /// [8] Turbulence w (TTBK_EQUATIONS)
-  _data_eq[2].tab_eqs[EWTT_F]=n_index;                                    // table
-  _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK2");                // Navier-Stokes equation pointer
-  _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-  _data_eq[2].n_eqs++;                                               // number of quadratic system
-  n_index++;  // update counter
+      /// [8] Turbulence w (TTBK_EQUATIONS)
+      _data_eq[2].tab_eqs[EWTT_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("TK2");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;  // update counter
 #endif    // end splitting coupled
 
 #endif    // end  k-eq 2-equation model
 // #endif  // k-omega
-}
+    }
 #endif  // TTBK_EQUATIONS 
 
-  
 
 
-    
+
+
 
 
 /// c) Print
@@ -617,18 +630,18 @@ for(int iname=0;iname<n_equations;iname++) if(pbName[iname]== KTT_F){
 //            " Froud number    = " << 1./_IFr <<"\n";
   std::cout<< " -------------------------- \n"<< " External fields: \n";
   for(int iql=0; iql<3; iql++) {
-     std::cout<< " List eq.s with pol. order  "<< iql << ": " << _data_eq[iql].n_eqs << " equations \n";
+    std::cout<< " List eq.s with pol. order  "<< iql << ": " << _data_eq[iql].n_eqs << " equations \n";
     for(int k=0; k<_data_eq[iql].n_eqs; k++) {  // ql system index
       std::cout<< " Index= " <<k << " System= "<< _data_eq[iql].mg_eqs[k]->_eqname.c_str()<<";  Variables: ";
 //        int sumk1=0;
 //       for(int deg=iql; deg>-1; deg--) {  // degree= 0 -> const; =1 -> linear; =2 -> quad
-             
+
 //               std::cout<< " Number of "<< deg << "-order  external  fields " << _data_eq[deg].n_eqs << ";\n";
-        for(int k1=0; k1<   _data_eq[iql].mg_eqs[k]->_n_vars; k1++) {
-          std::cout<< " "<< _data_eq[iql].mg_eqs[k]->_var_names[k1];
+      for(int k1=0; k1<   _data_eq[iql].mg_eqs[k]->_n_vars; k1++) {
+        std::cout<< " "<< _data_eq[iql].mg_eqs[k]->_var_names[k1];
 //           sumk1++;
-        }
-        std::cout <<"\n";
+      }
+      std::cout <<"\n";
 //       }
     }
   }
@@ -659,9 +672,9 @@ void MGSolDA::init(const int Level) {
 //   const int  n_glob_q=_mgmesh._NoNodes[Level];
 //     int n_glob_l=_mgmesh._NoNodes[_mgmesh._NoFamFEM*_NoLevels];
 //     if (Level>0) n_glob_l=_mgmesh._NoNodes[Level-1];
-  int n_local_q=_mgmesh._off_nd[0][Level+1+off_proc]-_mgmesh._off_nd[0][off_proc]; //0=QUADRATIC
-  int n_local_l=_mgmesh._off_nd[1][Level+1+off_proc]-_mgmesh._off_nd[1][off_proc]; //1=LINEAR
-  int n_local_k=(_mgmesh._off_el[0][Level+1+off_proc]-_mgmesh._off_el[0][Level+off_proc])*_el_dof[0]; //0=Volume
+  int n_local_q=(_el_dof[2]>0) ? _mgmesh._off_nd[0][Level+1+off_proc]-_mgmesh._off_nd[0][off_proc]:0; //0=QUADRATIC
+  int n_local_l=(_el_dof[1]>0) ?_mgmesh._off_nd[1][Level+1+off_proc]-_mgmesh._off_nd[1][off_proc]:0; //1=LINEAR
+  int n_local_k=(_el_dof[0]>0) ?(_mgmesh._off_el[0][Level+1+off_proc]-_mgmesh._off_el[0][Level+off_proc])*_el_dof[0]:0; //0=Volume
 
   // global dofs
   int n_glob=_Dim[Level];
@@ -756,7 +769,7 @@ void MGSolDA::GenIc() {
     NumericVectorM &old_sol_top= *x_old[_NoLevels-1];
     const int *node_dof_top= &_node_dof[_NoLevels-1][0];
     int ntot_elements=0;
-    for(int ilev=0; ilev<_NoLevels; ilev++) ntot_elements += _mgmesh._NoElements[0][ilev];
+    for(int ilev=0; ilev<_NoLevels; ilev++) { ntot_elements += _mgmesh._NoElements[0][ilev]; }
     // temp vect
     double *u_value =new double[_n_vars];
     double xp[DIMENSION];
@@ -777,17 +790,17 @@ void MGSolDA::GenIc() {
 
     // face id vector ---------------------------------------------------------
     int *face_id_vect; face_id_vect=new int [offset];
-    for(int i=0; i<offset; i++) face_id_vect[i]=0;
+    for(int i=0; i<offset; i++) { face_id_vect[i]=0; }
     // Getting dataset
     std::ostringstream Name; Name << "NODES/COORD/BC";
     hid_t dtset = H5Dopen(file_id,Name.str().c_str()
 #if HDF5_VERSIONM != 1808
-                            ,H5P_DEFAULT
+                          ,H5P_DEFAULT
 #endif
                          );
     hid_t filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
     hid_t status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
-    if(status <0) std::cerr << "GenIc::read dims not found";
+    if(status <0) { std::cerr << "GenIc::read dims not found"; }
     else { // reading
       assert((int)dims[0]==offset);
       status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&face_id_vect[0]);
@@ -795,21 +808,21 @@ void MGSolDA::GenIc() {
     // Reading  mat_id ********************************************************
     // mat id vector
     int *mat_id_vect; mat_id_vect=new int [ntot_elements];
-    for(int i=0; i<ntot_elements; i++) mat_id_vect[i]=1;
+    for(int i=0; i<ntot_elements; i++) { mat_id_vect[i]=1; }
     // Getting dataset
-      std::ostringstream Name1; Name1 << "ELEMS/SUB/MAT";
-      dtset = H5Dopen(file_id,Name1.str().c_str()
+    std::ostringstream Name1; Name1 << "ELEMS/SUB/MAT";
+    dtset = H5Dopen(file_id,Name1.str().c_str()
 #if HDF5_VERSIONM != 1808
-                     ,H5P_DEFAULT
+                    ,H5P_DEFAULT
 #endif
-                     );
-      filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
-      status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
-      if(status <0) std::cerr << "GenIc::read mat dims not found";
-      else { // reading
-        status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,
-                       H5P_DEFAULT,&mat_id_vect[0]);
-      }  // end else
+                   );
+    filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
+    status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
+    if(status <0) { std::cerr << "GenIc::read mat dims not found"; }
+    else { // reading
+      status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,
+                     H5P_DEFAULT,&mat_id_vect[0]);
+    }  // end else
 
 //  end Reading  mat_id ******************************************************
 
@@ -825,7 +838,7 @@ void MGSolDA::GenIc() {
       for(int i=0; i<NDOF_FEM; i++) {
         // coordinates
         int k=map_nodes[elem_gidx+i];
-        for(int idim=0; idim<DIMENSION; idim++) xp[idim] = xyz_glob[k+idim*offset];
+        for(int idim=0; idim<DIMENSION; idim++) { xp[idim] = xyz_glob[k+idim*offset]; }
 
         face_id_node=face_id_vect[k];
 
@@ -838,14 +851,17 @@ void MGSolDA::GenIc() {
         // Set discontinuous fields
         if(i==NDOF_FEM-1)     for(int ivar=0; ivar<_nvars[0]; ivar++) {
             sol_top.set(node_dof_top[elem_indx+(ivar+_nvars[2]+_nvars[1])*offset],u_value[_nvars[2]+_nvars[1]+ivar]);
-            for(int kdof0=1; kdof0<_el_dof[0]; kdof0++)
+            for(int kdof0=1; kdof0<_el_dof[0]; kdof0++) {
               sol_top.set(node_dof_top[ kdof0+elem_indx+(ivar+_nvars[2]+_nvars[1])*offset],0.);
+            }
           }
         // Set the quadratic and linear fields
-        if(i<_el_dof[1]) for(int ivar=0; ivar<_nvars[2]+_nvars[1]; ivar++)
+        if(i<_el_dof[1]) for(int ivar=0; ivar<_nvars[2]+_nvars[1]; ivar++) {
             sol_top.set(node_dof_top[k+ivar*offset],u_value[ivar]);
-        else  for(int ivar=0; ivar<_nvars[2]; ivar++)
+          }
+        else  for(int ivar=0; ivar<_nvars[2]; ivar++) {
             sol_top.set(node_dof_top[k+ivar*offset],u_value[ivar]);
+          }
       }
     } // end of element loop
     // delocalize
@@ -855,8 +871,8 @@ void MGSolDA::GenIc() {
 #ifdef PRINT_INFO
     std::cout << "\n GenIc(DA): Initial solution defined by    ic_read(xp,u_value)" << "\n \n";
 #endif
-  delete [] face_id_vect;
-  delete [] mat_id_vect;
+    delete [] face_id_vect;
+    delete [] mat_id_vect;
   } else {// -------------------- file reading --> data_in/case.h5
     const int restart_lev = _mgutils.get_par("restart_lev");
     read_u(ibc_file.str(),restart_lev);
@@ -865,7 +881,7 @@ void MGSolDA::GenIc() {
 #endif
   } // +++++++++++++++++++++++++++++++++++++++++++++
 
-  
+
   in.close();
   return;
 }
@@ -877,8 +893,9 @@ void MGSolDA::GenBc(
   /// A) Set up: mesh,dof, bc
   //mesh ----------------------------------------------------------------------
   const int offset    =_mgmesh._NoNodes[_NoLevels-1];
-  int ntot_elements=0;    for(int ilev=0; ilev<_NoLevels; ilev++)
+  int ntot_elements=0;    for(int ilev=0; ilev<_NoLevels; ilev++) {
     ntot_elements += _mgmesh._NoElements[0][ilev];
+  }
   // Dof ----------------------------------------------------------------------
   const int n_kb_dofs = ((_nvars[0]>0) ? DIMENSION+1:0);  // surface dofs
   const int n_pb_dofs = ((_nvars[1]>0) ? _fe[1]->_NoShape[DIMENSION-2]:0);//get_n_shapes(DIMENSION-2);
@@ -898,53 +915,53 @@ void MGSolDA::GenBc(
   std::ostringstream file_bc;
   file_bc  << _mgutils._inout_dir << _mgutils.get_file("INMESH");//"/mesh.h5";
 #ifdef PRINT_INFO
-    std::cout << " Reading bc_id from= " <<  file_bc.str() <<  std::endl;
+  std::cout << " Reading bc_id from= " <<  file_bc.str() <<  std::endl;
 #endif
   hid_t  file_id = H5Fopen(file_bc.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
   hsize_t dims[2];
   // face id vector initial setting (set 0) -----------------------------------
   int *face_id_vect; face_id_vect=new int [offset];
-  for(int i=0; i<offset; i++) face_id_vect[i]=0;
+  for(int i=0; i<offset; i++) { face_id_vect[i]=0; }
   // Getting dataset ----------------------------------------------------------
   std::ostringstream Name; Name << "NODES/COORD/BC";
   hid_t dtset = H5Dopen(file_id,Name.str().c_str()
 #if HDF5_VERSIONM != 1808
-                      ,H5P_DEFAULT
+                        ,H5P_DEFAULT
 #endif
                        );
   hid_t filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
   hid_t status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
-  if(status <0) std::cerr << "GenIc::read dims not found";
+  if(status <0) { std::cerr << "GenIc::read dims not found"; }
   else { // reading (otherwise it stays 0)
     assert((int)dims[0]==offset);
     status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&face_id_vect[0]);
   }
-  H5Dclose(dtset); 
+  H5Dclose(dtset);
   H5Sclose(filespace);
   // **************************************************************************
   // C) Reading  mat_id (volume zones) if the dataset exists
   // mat id vector initialization ---------------------------------------------
   int *mat_id_vect; mat_id_vect=new int [ntot_elements];
 //   int *mat_id_vect_lev; int icount=0;
-  for(int i=0; i<ntot_elements; i++) mat_id_vect[i]=1;
+  for(int i=0; i<ntot_elements; i++) { mat_id_vect[i]=1; }
   // level loop (in the file are written for each level)
-    // Getting dataset --------------------------------------------------------
-    std::ostringstream Name1; Name1 << "ELEMS/SUB/MAT";
-    dtset = H5Dopen(file_id,Name1.str().c_str()
+  // Getting dataset --------------------------------------------------------
+  std::ostringstream Name1; Name1 << "ELEMS/SUB/MAT";
+  dtset = H5Dopen(file_id,Name1.str().c_str()
 #if HDF5_VERSIONM != 1808
                   ,H5P_DEFAULT
 #endif
-                   );
-    filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
-    status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
-    if(status <0) {std::cerr << "GenIc::read mat dims not found";}
-    else { // reading if the dataset exists (otherwise it stays 1) ------------
-      status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&mat_id_vect[0]);
-    }  // end reading ---------------------------------------------------------
+                 );
+  filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
+  status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
+  if(status <0) {std::cerr << "GenIc::read mat dims not found";}
+  else { // reading if the dataset exists (otherwise it stays 1) ------------
+    status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&mat_id_vect[0]);
+  }  // end reading ---------------------------------------------------------
   // clean --------------------------------------------------------------------
-   H5Dclose(dtset);
+  H5Dclose(dtset);
   H5Sclose(filespace);
-H5Fclose(file_id);
+  H5Fclose(file_id);
   // *************************************************************************
   /// C  reading bc from function --> bc_read
   GenBc_loop(0,NDOF_FEM,n_u_dofs,n_l_dofs,n_k_dofs,
@@ -980,12 +997,13 @@ void MGSolDA::GenBc_loop(
   const double *xyzgl  =_mgmesh._xyz;
   const int  offset    =_mgmesh._NoNodes[_NoLevels-1];
 //   double normal[DIMENSION];
-  double xp[DIMENSION];
+  double xp[DIMENSION];  double xxb_qnds[NDOF_FEM *DIMENSION];
+  double normal[DIMENSION]; 
   int  *bc_Neu  =new int[n_dofs]; // element bc
   int  *bc_value=new int[n_dofs]; // element bc
   int face_id_node=0;  int mat_id_elem=0;
   int ndof_lev =0;
-  
+
   /// B) Element Loop to set  bc[] (which is a node vector)
   for(int isub=0; isub<_mgmesh._n_subdom; ++isub) {
     int iel0=_mgmesh._off_el[vb][_NoLevels-1+_NoLevels*isub];
@@ -993,51 +1011,124 @@ void MGSolDA::GenBc_loop(
     int delta =ielf-iel0;
 
     for(int iel=0; iel <delta; iel++) { // element loop
+
       mat_id_elem=mat_id_vect[iel+iel0];
       for(int i=0; i< ndof_femv; i++) { // node lement loop
         const int k=_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+i]; // global node
         // coordinates
-        for(int idim=0; idim<DIMENSION; idim++) xp[idim] = xyzgl[k+idim*offset];
+        for(int idim=0; idim< DIMENSION; idim++) { xp[idim] = xyzgl[k+idim*offset]; }
         for(int ivar=0; ivar<n_dofs; ivar++)  { // variable loop
           bc_value[ivar]=1;// set 1 all the points for  bc (boundary condition)
           bc_Neu[ivar]=11;  // set 1 all the points for  bc (boundary condition)
         }
         // boundary (face_id_vect) and volume zones (mat_id_elem)
-        face_id_node=face_id_vect[k];    
-        
+        face_id_node=face_id_vect[k];
+
         /// Calling the local point functions
-        if(vb == 1)  bc_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value);
-        else  bc_intern_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value);
+        if(vb == 1) { bc_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value); }
+        else { bc_intern_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value); }
         /// ==================================================
 
         // set the local boundary conditions into global vector bc[]
-        if(i<n_u_dofs)   for(int ivar=0; ivar<_nvars[2]; ivar++) {// quad el --
-            int kdof= _node_dof[_NoLevels-1][k+ivar* offset];
-            bc[0][kdof] =bc_Neu[ivar];
-            bc[1][kdof] =bc_value[ivar];
-          } // ----------------------------------------------------------------
-        if(i<n_l_dofs) { // Set the linear fields -----------------------------
-          for(int ivarp=_nvars[2]; ivarp<(_nvars[1]+_nvars[2]); ivarp++) {
-            int kdof= _node_dof[_NoLevels-1][k+ (ivarp) * offset];
-            bc[0][kdof]=bc_Neu[ivarp];   bc[1][kdof]=bc_value[ivarp];
-          }
-        }// end if(i<n_l ------------------------------------------------------
-        if(i == ndof_femv-1 && vb==0) { // Set the constant piecewise fields---
-          for(int ivarp=_nvars[2]+_nvars[1]; ivarp<(_nvars[0]+_nvars[2]+_nvars[1]); ivarp++) {
-            for(int idof=0; idof<_el_dof[0]; idof++) {
-              int kdof= _node_dof[_NoLevels-1][idof+(iel+ndof_lev)*_el_dof[0]+ivarp*offset];
-              bc[0][kdof]=bc_Neu[ivarp];
-              bc[1][kdof]=bc_value[ivarp];
-            }
-          }
-        } // end  if(i
-        // ****************************************************
-      } // i
+        bc[0][_node_dof[_NoLevels-1][k]] =bc_Neu[0];
+
+      } // i local node loop
 
     } // end of element loop
     ndof_lev +=delta;
   }
-  // clean
+
+
+  if(vb==1) {
+
+ ndof_lev =0;
+    /// B) Element Loop to set  bc[] (which is a node vector)
+    for(int isub=0; isub<_mgmesh._n_subdom; ++isub) {
+      int iel0=_mgmesh._off_el[vb][_NoLevels-1+_NoLevels*isub];
+      int ielf=_mgmesh._off_el[vb][_NoLevels-1+_NoLevels*isub+1];
+      int delta =ielf-iel0;
+
+      for(int iel=0; iel <delta; iel++) { // element loop
+
+        for(int i=0; i< ndof_femv; i++)  // node lement loop
+          for(int idim=0; idim< DIMENSION; idim++) { xxb_qnds[i+ndof_femv*idim]=  xyzgl[_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+i]+idim*offset]; }
+
+
+        // normal
+        _fe[2]->normal_g(xxb_qnds,normal);
+        int dir_maxnormal = (fabs(normal[0])>fabs(normal[1]))?0:1 ;
+        dir_maxnormal= (fabs(normal[dir_maxnormal])>fabs(normal[DIMENSION-1]))? dir_maxnormal:DIMENSION-1;
+
+        // computation of k_el and face_id_el
+        int k_el=_mgmesh._el_map[1][(iel+iel0)*ndof_femv+ndof_femv-1]; // global node
+        int k_el_dof=_node_dof[_NoLevels-1][k_el];
+        int bc_el=(int)bc[0][k_el_dof];
+        int score_old=1000;
+
+
+        if(ndof_femv-NDOF_P==3) { // tet 10 only
+          for(int ik=0; ik<3; ik++) {
+            int score=0;
+            int  bc_id=bc[0][ _node_dof[_NoLevels-1][_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+ndof_femv-1-ik]]];
+            score +=(bc[0][ _node_dof[_NoLevels-1][_mgmesh._el_map[vb][(iel+iel0)*ndof_femv+2-ik]]]    == bc_id)?1:0;
+            score +=(bc[0][ _node_dof[_NoLevels-1][_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+(3-ik)%3]]]== bc_id)?1:0;
+            if(score<score_old) {
+              score_old=score; k_el=_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+ndof_femv-1-ik];
+              bc_el=bc[0][ _node_dof[_NoLevels-1][k_el]];
+            }
+          }
+        }
+
+
+        for(int i=0; i< ndof_femv; i++) { // node lement loop
+          const int k=_mgmesh._el_map[vb][(iel+iel0) *ndof_femv+i]; // global node
+          int k0dof=  _node_dof[_NoLevels-1][k];
+          face_id_node=face_id_vect[k0dof];
+          int bc_id=(int)bc[0][k0dof];
+//           bc_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value);
+          // set the local boundary conditions into global vector bc[]
+          if(bc_id==bc_el) {
+            if(i<n_u_dofs && bc_id==bc_el)   {
+              for(int ivar=0; ivar<_nvars[2]; ivar++) {// quad el --
+                int kdof=_node_dof[_NoLevels-1][k+ivar* offset]; int tdof=  _node_dof[_NoLevels-1][k];
+                if(ivar+_dir == dir_maxnormal)  {  bc[1][kdof] =(bc_el/10)+10;}
+                else {   bc[1][kdof] =bc_el%10; }
+              } // ----------------------------------------------------------------
+            }
+//             if(i<n_l_dofs) { // Set the linear fields -----------------------------
+//               for(int ivarp=_nvars[2]; ivarp<(_nvars[1]+_nvars[2]); ivarp++) {
+//                 int kdof= _node_dof[_NoLevels-1][k+ (ivarp) * offset]; int tdof=  _node_dof[_NoLevels-1][k];
+//                 bc[1][kdof] =(int)(bc[0][tdof]/10)+10;
+//               }
+//             }// end if(i<n_l ------------------------------------------------------
+//           }// bc_id==bc_el
+// 
+//             if(i == ndof_femv-1) { // Set the constant piecewise fields---
+//           for(int ivarp=_nvars[2]+_nvars[1]; ivarp<(_nvars[0]+_nvars[2]+_nvars[1]); ivarp++) {
+//             for(int idof=0; idof<_el_dof[0]; idof++) {
+//               int kdof= _node_dof[_NoLevels-1][idof+(iel+ndof_lev)*_el_dof[0]+ivarp*offset];
+//               int tdof=  _node_dof[_NoLevels-1][k];
+//               bc[1][kdof] =(int)(bc[0][tdof]/10)+10;
+// //               bc[0][kdof]=bc_Neu[ivarp];
+// //               bc[1][kdof]=bc_value[ivarp];
+//             }
+//           }
+        } // end  if(i
+          
+        } // loop i
+
+
+
+
+
+
+      } // end of element loop
+      ndof_lev +=delta;
+    }
+  }
+
+
+// clean
   delete []bc_value;  delete []bc_Neu;
   return;
 }
@@ -1048,12 +1139,12 @@ void MGSolDA::GenBc_loop(
 void MGSolDA::bc_intern_read(
   int /*face_id_node*/,  ///<  face identity           (in)
   int  /*mat_flag*/,     ///<  volume identity         (in)
-  double /*xp*/[],       ///< xp[] node coordinates    (in) 
+  double /*xp*/[],       ///< xp[] node coordinates    (in)
   int bc_Neum[],         ///< Neuman (1)/Dirichlet(0)  (out)
   int bc_flag[]          ///< boundary condition flag  (out)
 ) {// ===================================
   /// Default: all Neumann
-  for(int ivar=0;ivar<_n_vars;ivar++) {bc_flag[ivar]=1;bc_Neum[ivar]=11;}
+  for(int ivar=0; ivar<_n_vars; ivar++) {bc_flag[ivar]=1; bc_Neum[ivar]=11;}
   return;
 }
 // ===========================================================
@@ -1074,9 +1165,9 @@ void MGSolDA::init_dof(
 
 // number of total dofs
   int n_nodes_l=_mgmesh._NoNodes[_mgmesh._NoFamFEM*_NoLevels];
-  if(Level>0) n_nodes_l=_mgmesh._NoNodes[Level-1];
+  if(Level>0) { n_nodes_l=_mgmesh._NoNodes[Level-1]; }
   _Dim[Level]= _nvars[0]*n_elem*_el_dof[0] + _nvars[1]*n_nodes_l + _nvars[2]*n_nodes;
-  
+
 #ifdef PRINT_INFO
   std::cout << Level<< " node " << n_nodes << " dof " << _Dim[Level] << " pres " << n_nodes_l<<std::endl;
 #endif
@@ -1093,7 +1184,7 @@ void MGSolDA::init_dof(
 
   // construction dof node vector(_node_dof) +++++++++++++++++++++
   _node_dof[Level] =new int[_n_vars *offset];
-  for(int k1=0; k1< offset*_n_vars; k1++) _node_dof[Level][k1]=-1;
+  for(int k1=0; k1< offset*_n_vars; k1++) { _node_dof[Level][k1]=-1; }
   int count=0;
   int ndof_lev=0;
   for(int isubdom=0; isubdom<n_subdom; isubdom++) {
@@ -1142,7 +1233,7 @@ void  MGSolDA::get_el(
   const int el_nds,     // # of element nodes for this variable  <-
   const int el_conn[],  // connectivity <-
   const int offset,     // offset for connectivity <-
-  std::vector<int>   & el_dof_indices, // element DOFs->
+  std::vector<int>    &el_dof_indices, // element DOFs->
   int   bc_dofs[][NDOF_FEM],        // element boundary cond flags ->
   double  uold[]            // element node values ->
 )  const { // ==============================================================
@@ -1153,8 +1244,7 @@ void  MGSolDA::get_el(
         ivar=ivar0; ivar<ivar0+nvars; ivar++) {  //ivarq is like idim
       const int
       indx_loc = id +ivar*NDOF_FEM;        // local (element) index
-      const int
-      indx_glob= el_conn[id]+ivar*offset;  // global (mesh) index
+      const int indx_glob= el_conn[id]+ivar*offset;  // global (mesh) index
       const int  kdof_top = _node_dof[_NoLevels-1][indx_glob]; // dof from top level
 
       el_dof_indices[indx_loc]= _node_dof[Level][indx_glob];     //from mesh to dof
@@ -1175,7 +1265,7 @@ void  MGSolDA::get_el_dof_bc(
   const int el_nds[],      // # of element nodes for this variable  <-
   const int el_conn[],   // connectivity <-
   const int  offset,      // offset for connectivity <-
-  std::vector<int>   & el_dof_indices, // element connectivity ->
+  std::vector<int>    &el_dof_indices, // element connectivity ->
   int  bc_vol[],        // element boundary cond flags ->
   int  bc_bd[]        // element boundary cond flags ->
 )  const { // ==============================================================
@@ -1237,7 +1327,7 @@ void  MGSolDA::interp_el_gdx(
 
   // variable loop
   for(int ivar=0; ivar<nvars; ivar++) {
-    for(int jdim=0; jdim< DIMENSION; jdim++) uold_dx[ivar*DIMENSION+jdim]=0.;  // set zero
+    for(int jdim=0; jdim< DIMENSION; jdim++) { uold_dx[ivar*DIMENSION+jdim]=0.; }  // set zero
     // interpolation with shape functions
     for(int eln=0; eln<n_shape; eln++) {
       for(int jdim=0; jdim<DIMENSION; jdim++) {
@@ -1262,7 +1352,7 @@ void  MGSolDA::interp_el_gddx(
 
   // variable loop
   for(int ivar=0; ivar<nvars; ivar++) {
-    for(int jdim=0; jdim< DIMENSION*DIMENSION; jdim++) uold_dx[ivar*DIMENSION*DIMENSION+jdim]=0.;  // set zero
+    for(int jdim=0; jdim< DIMENSION*DIMENSION; jdim++) { uold_dx[ivar*DIMENSION*DIMENSION+jdim]=0.; }  // set zero
     // interpolation with shape functions
     for(int eln=0; eln<n_shape; eln++) {
       for(int jdim=0; jdim<DIMENSION*DIMENSION; jdim++) {
@@ -1348,8 +1438,9 @@ void  MGSolDA::interp_el_sol(
 )  const { // =======================================
   for(int ivar=ivar0; ivar<ivar0+nvars; ivar++) {
     uold[ivar]=0.;
-    for(int eln=0; eln<n_shape; eln++)
+    for(int eln=0; eln<n_shape; eln++) {
       uold[ivar] += phi[eln]*uold_b[eln+ ivar*NDOF_FEM];
+    }
   }
   return;
 }
@@ -1421,7 +1512,7 @@ void MGSolDA::print_u(
   //  set up
   const int n_nodes=_mgmesh._NoNodes[Level];
   const int offset=_mgmesh._NoNodes[_NoLevels-1];
-  double* sol=new double[n_nodes+1];
+  double *sol=new double[n_nodes+1];
 
   hid_t file_id = H5Fopen(namefile.c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
   hsize_t  dimsf[2];
@@ -1432,8 +1523,9 @@ void MGSolDA::print_u(
   // print quad -------------------------------------
   for(int ivar=0; ivar<_nvars[2]; ivar++)        {
     std::string var_name = _var_names[ivar];
-    for(int i=0; i< n_nodes; i++)
+    for(int i=0; i< n_nodes; i++) {
       sol[i]  = (*x_old[Level])(_node_dof[Level][i+ivar*offset])*_refvalue[ivar];
+    }
     _mgutils.print_Dhdf5(file_id,var_name,dimsf,sol);
   }
 
@@ -1472,7 +1564,7 @@ void MGSolDA::print_u(
 
         for(int in=0; in<NDOF_FEM; in++) {    // mid-points
           double sum=0;
-          for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
+          for(int jn=0; jn<NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn]; }
           sol[_mgmesh._el_map[0][indx+in]]=sum;
         }
       } // ---- end iel -------------------------
@@ -1528,9 +1620,9 @@ void MGSolDA::print_u(
 }
 
 // =========================================
- void  MGSolDA::set_x2xooold(){
-    
-    
+void  MGSolDA::set_x2xooold() {
+
+
 /// A. Setup
 //   NoLevels
   const int offset=_mgmesh._NoNodes[_NoLevels-1]; // fine level # of nodes
@@ -1542,7 +1634,7 @@ void MGSolDA::print_u(
 
   /// B. Read from  Level-1  (NoLevels-2)
 //   if(Level_restart !=0) {
-// 
+//
 //     // set up
 //     const int ndigits  = _mgutils.get_par("ndigits");               // digit for namefile
 //     const int restart  = _mgutils.get_par("restart");               // restart label
@@ -1551,47 +1643,47 @@ void MGSolDA::print_u(
 //     std::ostringstream namefile_sol;
 //     namefile_sol << resu_dir <<  "/sol.msh1." << setw(ndigits) << setfill('0') <<  restart << ".h5";          //  namefile_sol
 //     file_sol = H5Fopen(namefile_sol.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
-// 
+//
 //     std::ostringstream namefile_mesh;                               //   namefile_mesh
 //     namefile_mesh<< "/home/filippo/software/new_femus_inst/femus/USER_APPL/turb_1/RESU_AUX/mesh.msh1.h5";
 //     hid_t  file_mesh = H5Fopen(namefile_mesh.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
-// 
+//
 //     int Level=_NoLevels-2;                                        // Reading from Level
-// 
+//
 //     const int n_elem=_mgmesh._NoElements[0][Level];               // coarse level # of elements
 //     const int offset_lev=_mgmesh._NoNodes[Level];                 // coarse level # of nodes
 //     int *map_f2c=new int[offset];                                 // node map fine to coarse
-// 
+//
 //     std::cout << " Reading Level-1 sol from file " <<  namefile_sol.str() << "\n";
 //     std::cout << " Reading Level-1 connectivity from file " <<  namefile_mesh.str() << "\n";
-// 
+//
 //     // file to read
 //     double sol_c[NDOF_FEM];
 //     double sol_f[NDOF_FEM];   // element connectivity
 //     sol=new double[offset_lev];               // coarse solution     (sol.xxx.h5)
 //     sol_pie=new double[1];
-// 
+//
 //     std::ostringstream namedir_conn;                  // coarse connectivity (-> mesh.h5)
 //     namedir_conn << "/ELEMS/FEM0/MSH" << Level;
 //     int  *map_coarse=new int[NDOF_FEM*n_elem];
 //     _mgutils.read_Ihdf5(file_mesh,namedir_conn.str().c_str(),map_coarse);
-// 
+//
 //     int offel_coarse=0; // # of element at Level for proc < _iproc
 //     for(int jproc=0; jproc <_iproc; jproc++)
 //       offel_coarse +=_mgmesh._off_el[0][jproc*_NoLevels+Level+1]-_mgmesh._off_el[0][jproc*_NoLevels+Level];
-// 
-// 
+//
+//
 //     for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+Level+1]-
 //         _mgmesh._off_el[0][_iproc*_NoLevels+Level]; iel++) {
-// 
+//
 //       int    elem_gidx= (iel+_mgmesh._off_el[0][_iproc*_NoLevels+Level])*NDOF_FEM;
 //       int    elem_coarse_gidx= (iel+offel_coarse)*NDOF_FEM;
 //       for(int in=0; in<NDOF_FEM; in++) {
 //         map_f2c[_mgmesh._el_map[0][elem_gidx+in]]=map_coarse[elem_coarse_gidx+in];
 //       }
 //     }
-// 
-// 
+//
+//
 //     // reading loop over system varables
 //     for(int  ivar=0; ivar< _n_vars; ivar++) {
 //       int  el_nds=NDOF_FEM;
@@ -1599,7 +1691,7 @@ void MGSolDA::print_u(
 //       // reading ivar param
 //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);   // reading coarse quad solution (sol.xxx.h5)
 //       double Irefval = 1./_refvalue[ivar]; // units
-// 
+//
 //       // storing  ivar variables (in parallell)
 //       for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
 //           _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
@@ -1615,7 +1707,7 @@ void MGSolDA::print_u(
 //           for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
 //           sol_f[in]=sum;
 //         }
-// 
+//
 //         for(int    i=0; i<el_nds; i++) {   // linear and quad
 //           int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
 //           x[_NoLevels-1]->set(_node_dof[_NoLevels-1][k+ivar*offset],sol_f[i]*Irefval);//sol[k]*Irefval);    // set the field
@@ -1629,21 +1721,21 @@ void MGSolDA::print_u(
 //   /// C. Read from  the same Level (NoLevels-1)
 //   else {
 
-    // file to read
-    sol=new double[offset]; // temporary vector
+  // file to read
+  sol=new double[offset]; // temporary vector
 //     sol_pie=new double[pie_offset];
 //     file_sol = H5Fopen(namefile.c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
 
-    // reading loop over system varables
-    for(int ivar=0; ivar< _nvars[2]+ _nvars[1]; ivar++) {
-      int  el_nds=NDOF_FEM;
-      if(ivar >= _nvars[2]) el_nds=NDOF_P;    // quad and linear
-      // reading ivar param
+  // reading loop over system varables
+  for(int ivar=0; ivar< _nvars[2]+ _nvars[1]; ivar++) {
+    int  el_nds=NDOF_FEM;
+    if(ivar >= _nvars[2]) { el_nds=NDOF_P; }    // quad and linear
+    // reading ivar param
 //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);
-      double Irefval = 1./_refvalue[ivar]; // units
+    double Irefval = 1./_refvalue[ivar]; // units
 
-      // storing  ivar variables (in parallell)
-       for(int  iproc = 0; iproc <_mgmesh._n_subdom; iproc++) 
+    // storing  ivar variables (in parallell)
+    for(int  iproc = 0; iproc <_mgmesh._n_subdom; iproc++)
       for(int iel=0; iel <_mgmesh._off_el[0][iproc*_NoLevels+_NoLevels]-
           _mgmesh._off_el[0][iproc*_NoLevels+_NoLevels-1]; iel++) {
         int  elem_gidx= (iel+_mgmesh._off_el[0][iproc*_NoLevels+_NoLevels-1]) *NDOF_FEM;
@@ -1653,13 +1745,13 @@ void MGSolDA::print_u(
           x_ooold[_NoLevels-1]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
         }
       }
-    }
+  }
 
-    int ndof_lev=0;
-    for(int pr=0; pr <_mgmesh._iproc; pr++) {
-      int delta =_mgmesh._off_el[0][pr*_NoLevels+_NoLevels]-_mgmesh._off_el[0][pr*_NoLevels+_NoLevels-1];
-      ndof_lev +=delta;
-    }
+  int ndof_lev=0;
+  for(int pr=0; pr <_mgmesh._iproc; pr++) {
+    int delta =_mgmesh._off_el[0][pr*_NoLevels+_NoLevels]-_mgmesh._off_el[0][pr*_NoLevels+_NoLevels-1];
+    ndof_lev +=delta;
+  }
 //     //piecewise function
 //     for(int ivar=_nvars[2]+ _nvars[1]; ivar< _n_vars; ivar++) {
 //       int  el_nds=NDOF_FEM;
@@ -1667,7 +1759,7 @@ void MGSolDA::print_u(
 //       // reading ivar param
 // //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol_pie);
 //       double Irefval = 1./_refvalue[ivar]; // units
-// 
+//
 //       // storing  ivar variables (in parallell)
 //       for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
 //           _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
@@ -1688,18 +1780,18 @@ void MGSolDA::print_u(
 //   H5Fclose(file_sol);
   delete []sol;
 //   delete []sol_pie;
-    
-    return;
-  }
-  
-  
-  
-  
-  // =========================================
- void  MGSolDA::set_xooold2x(){
-   
-   
-  
+
+  return;
+}
+
+
+
+
+// =========================================
+void  MGSolDA::set_xooold2x() {
+
+
+
 /// A. Setup
 //   NoLevels
   const int offset=_mgmesh._NoNodes[_NoLevels-1]; // fine level # of nodes
@@ -1711,7 +1803,7 @@ void MGSolDA::print_u(
 
   /// B. Read from  Level-1  (NoLevels-2)
 //   if(Level_restart !=0) {
-// 
+//
 //     // set up
 //     const int ndigits  = _mgutils.get_par("ndigits");               // digit for namefile
 //     const int restart  = _mgutils.get_par("restart");               // restart label
@@ -1720,47 +1812,47 @@ void MGSolDA::print_u(
 //     std::ostringstream namefile_sol;
 //     namefile_sol << resu_dir <<  "/sol.msh1." << setw(ndigits) << setfill('0') <<  restart << ".h5";          //  namefile_sol
 //     file_sol = H5Fopen(namefile_sol.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
-// 
+//
 //     std::ostringstream namefile_mesh;                               //   namefile_mesh
 //     namefile_mesh<< "/home/filippo/software/new_femus_inst/femus/USER_APPL/turb_1/RESU_AUX/mesh.msh1.h5";
 //     hid_t  file_mesh = H5Fopen(namefile_mesh.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
-// 
+//
 //     int Level=_NoLevels-2;                                        // Reading from Level
-// 
+//
 //     const int n_elem=_mgmesh._NoElements[0][Level];               // coarse level # of elements
 //     const int offset_lev=_mgmesh._NoNodes[Level];                 // coarse level # of nodes
 //     int *map_f2c=new int[offset];                                 // node map fine to coarse
-// 
+//
 //     std::cout << " Reading Level-1 sol from file " <<  namefile_sol.str() << "\n";
 //     std::cout << " Reading Level-1 connectivity from file " <<  namefile_mesh.str() << "\n";
-// 
+//
 //     // file to read
 //     double sol_c[NDOF_FEM];
 //     double sol_f[NDOF_FEM];   // element connectivity
 //     sol=new double[offset_lev];               // coarse solution     (sol.xxx.h5)
 //     sol_pie=new double[1];
-// 
+//
 //     std::ostringstream namedir_conn;                  // coarse connectivity (-> mesh.h5)
 //     namedir_conn << "/ELEMS/FEM0/MSH" << Level;
 //     int  *map_coarse=new int[NDOF_FEM*n_elem];
 //     _mgutils.read_Ihdf5(file_mesh,namedir_conn.str().c_str(),map_coarse);
-// 
+//
 //     int offel_coarse=0; // # of element at Level for proc < _iproc
 //     for(int jproc=0; jproc <_iproc; jproc++)
 //       offel_coarse +=_mgmesh._off_el[0][jproc*_NoLevels+Level+1]-_mgmesh._off_el[0][jproc*_NoLevels+Level];
-// 
-// 
+//
+//
 //     for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+Level+1]-
 //         _mgmesh._off_el[0][_iproc*_NoLevels+Level]; iel++) {
-// 
+//
 //       int    elem_gidx= (iel+_mgmesh._off_el[0][_iproc*_NoLevels+Level])*NDOF_FEM;
 //       int    elem_coarse_gidx= (iel+offel_coarse)*NDOF_FEM;
 //       for(int in=0; in<NDOF_FEM; in++) {
 //         map_f2c[_mgmesh._el_map[0][elem_gidx+in]]=map_coarse[elem_coarse_gidx+in];
 //       }
 //     }
-// 
-// 
+//
+//
 //     // reading loop over system varables
 //     for(int  ivar=0; ivar< _n_vars; ivar++) {
 //       int  el_nds=NDOF_FEM;
@@ -1768,7 +1860,7 @@ void MGSolDA::print_u(
 //       // reading ivar param
 //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);   // reading coarse quad solution (sol.xxx.h5)
 //       double Irefval = 1./_refvalue[ivar]; // units
-// 
+//
 //       // storing  ivar variables (in parallell)
 //       for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
 //           _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
@@ -1784,7 +1876,7 @@ void MGSolDA::print_u(
 //           for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
 //           sol_f[in]=sum;
 //         }
-// 
+//
 //         for(int    i=0; i<el_nds; i++) {   // linear and quad
 //           int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
 //           x[_NoLevels-1]->set(_node_dof[_NoLevels-1][k+ivar*offset],sol_f[i]*Irefval);//sol[k]*Irefval);    // set the field
@@ -1798,36 +1890,36 @@ void MGSolDA::print_u(
 //   /// C. Read from  the same Level (NoLevels-1)
 //   else {
 
-    // file to read
-    sol=new double[offset]; // temporary vector
-    sol_pie=new double[pie_offset];
+  // file to read
+  sol=new double[offset]; // temporary vector
+  sol_pie=new double[pie_offset];
 //     file_sol = H5Fopen(namefile.c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
 
-    // reading loop over system varables
-    for(int ivar=0; ivar< _nvars[2]+ _nvars[1]; ivar++) {
-      int  el_nds=NDOF_FEM;
-      if(ivar >= _nvars[2]) el_nds=NDOF_P;    // quad and linear
-      // reading ivar param
+  // reading loop over system varables
+  for(int ivar=0; ivar< _nvars[2]+ _nvars[1]; ivar++) {
+    int  el_nds=NDOF_FEM;
+    if(ivar >= _nvars[2]) { el_nds=NDOF_P; }    // quad and linear
+    // reading ivar param
 //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);
-      double Irefval = 1./_refvalue[ivar]; // units
+    double Irefval = 1./_refvalue[ivar]; // units
 
-      // storing  ivar variables (in parallell)
-      for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
-          _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
-        int  elem_gidx= (iel+_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]) *NDOF_FEM;
-        for(int  i=0; i<el_nds; i++) {   // linear and quad
-          int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
-          const double value=(*x_ooold[_NoLevels-1])(_node_dof[_NoLevels-1][k+ivar*offset]);
-          x[_NoLevels-1]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-        }
+    // storing  ivar variables (in parallell)
+    for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
+        _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
+      int  elem_gidx= (iel+_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]) *NDOF_FEM;
+      for(int  i=0; i<el_nds; i++) {   // linear and quad
+        int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
+        const double value=(*x_ooold[_NoLevels-1])(_node_dof[_NoLevels-1][k+ivar*offset]);
+        x[_NoLevels-1]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
       }
     }
+  }
 
-    int ndof_lev=0;
-    for(int pr=0; pr <_mgmesh._iproc; pr++) {
-      int delta =_mgmesh._off_el[0][pr*_NoLevels+_NoLevels]-_mgmesh._off_el[0][pr*_NoLevels+_NoLevels-1];
-      ndof_lev +=delta;
-    }
+  int ndof_lev=0;
+  for(int pr=0; pr <_mgmesh._iproc; pr++) {
+    int delta =_mgmesh._off_el[0][pr*_NoLevels+_NoLevels]-_mgmesh._off_el[0][pr*_NoLevels+_NoLevels-1];
+    ndof_lev +=delta;
+  }
 //     //piecewise function
 //     for(int ivar=_nvars[2]+ _nvars[1]; ivar< _n_vars; ivar++) {
 //       int  el_nds=NDOF_FEM;
@@ -1835,7 +1927,7 @@ void MGSolDA::print_u(
 //       // reading ivar param
 // //       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol_pie);
 //       double Irefval = 1./_refvalue[ivar]; // units
-// 
+//
 //       // storing  ivar variables (in parallell)
 //       for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels]-
 //           _mgmesh._off_el[0][_iproc*_NoLevels+_NoLevels-1]; iel++) {
@@ -1854,11 +1946,11 @@ void MGSolDA::print_u(
 //   H5Fclose(file_sol);
   delete []sol;
   delete []sol_pie;
-    
-    return;
-  }
-  
-  
+
+  return;
+}
+
+
 
 #ifdef HAVE_MED
 // ============================================================
@@ -1871,7 +1963,7 @@ void MGSolDA::print_u_med(
   int n_elements = _mgmesh._NoElements[0][_NoLevels-1];
   int nodes_el = _mgmesh._type_FEM[0];
 
-  double * coord; coord = new double[n_nodes*3];
+  double *coord; coord = new double[n_nodes*3];
 
   for(int i=0; i<n_nodes; i++) {
     coord[i*3+1]=0.; coord[i*3+2]=0.;
@@ -1886,7 +1978,7 @@ void MGSolDA::print_u_med(
   int  Level=_mgmesh._NoLevels-1;
   int icount =0;
 
-  int * conn; conn=new int [n_elements*nodes_el];
+  int *conn; conn=new int [n_elements*nodes_el];
   for(int  iproc = 0; iproc <_mgmesh._n_subdom; iproc++) {
     for(int el = _mgmesh._off_el[0][iproc*_mgmesh._NoLevels+Level];
         el <_mgmesh._off_el[0][iproc*_mgmesh._NoLevels+Level+1]; el++) {
@@ -1900,8 +1992,9 @@ void MGSolDA::print_u_med(
 
   ParaMEDMEM::MEDCouplingUMesh *mesh=ParaMEDMEM::MEDCouplingUMesh::New("Mesh_1",_mgmesh._dim);
   mesh->allocateCells(n_elements);
-  for(int  i = 0; i < n_elements; i++)
+  for(int  i = 0; i < n_elements; i++) {
     mesh->insertNextCell(MED_EL_TYPE,nodes_el,conn+i*nodes_el);
+  }
   mesh->finishInsertingCells();
 
   ParaMEDMEM::DataArrayDouble *coordarr=ParaMEDMEM::DataArrayDouble::New();
@@ -1919,9 +2012,9 @@ void MGSolDA::print_u_med(
 
   //  set up
   const int offset=_mgmesh._NoNodes[_NoLevels-1];
-  double* sol=new double[n_nodes+1];
+  double *sol=new double[n_nodes+1];
 
-  ParaMEDMEM::MEDCouplingFieldDouble * f  = ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+  ParaMEDMEM::MEDCouplingFieldDouble *f  = ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
   f->setMesh(mesh);  f->setName(_var_names[0].c_str());
   ParaMEDMEM::DataArrayDouble *array = ParaMEDMEM::DataArrayDouble::New();
   array -> alloc(n_nodes, 1);
@@ -1941,7 +2034,7 @@ void MGSolDA::print_u_med(
   std::string s = "my_test3_sol_1";
   s += ".med";
   MEDLoader::WriteField(s.c_str(), f, true);
-return;
+  return;
 }
 #endif
 
@@ -1954,7 +2047,7 @@ void MGSolDA::print_bc(std::string namefile, const int Level) {
 //   const int  n_nodes_l=(Level >0) ?_mgmesh._NoNodes[Level-1]:_mgmesh._NoNodes[2*_NoLevels];
   const int offset=_mgmesh._NoNodes[_NoLevels-1];
 //   int nt= _nvars[0]*n_nodes+_nvars[1]*n_nodes_l;
-  int* sol=new int[n_nodes];
+  int *sol=new int[n_nodes];
 
   // file hdf5
   hid_t file_id = H5Fopen(namefile.c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
@@ -1966,10 +2059,10 @@ void MGSolDA::print_bc(std::string namefile, const int Level) {
   // print quad -------------------------------------
   for(int ivar=0; ivar<_nvars[2]; ivar++) {
     std::string var_name = _var_names[ivar]+"bd";
-    for(int i=0; i< n_nodes; i++) sol[i]= bc[1][_node_dof[_NoLevels-1][i+ivar*offset]];
+    for(int i=0; i< n_nodes; i++) { sol[i]= bc[1][_node_dof[_NoLevels-1][i+ivar*offset]]; }
     _mgutils.print_Ihdf5(file_id,var_name,dimsf,sol);
     std::string var_name2 = _var_names[ivar]+"vl";
-    for(int i=0; i< n_nodes; i++) sol[i]= bc[0][_node_dof[_NoLevels-1][i+ivar*offset]];
+    for(int i=0; i< n_nodes; i++) { sol[i]= bc[0][_node_dof[_NoLevels-1][i+ivar*offset]]; }
     _mgutils.print_Ihdf5(file_id,var_name2,dimsf,sol);
   }
 
@@ -2001,10 +2094,10 @@ void MGSolDA::print_bc(std::string namefile, const int Level) {
         int indx=iel*NDOF_FEM;
         // element iel ----------------------------
         // vertices
-        for(int in=0; in<NDOF_P; in++) sol_c[in]= sol[_mgmesh._el_map[0][indx+in]];
+        for(int in=0; in<NDOF_P; in++) { sol_c[in]= sol[_mgmesh._el_map[0][indx+in]]; }
         for(int in=0; in<NDOF_FEM; in++) {    // mid-points
           double sum=0;
-          for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
+          for(int jn=0; jn<NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn]; }
           sol[_mgmesh._el_map[0][indx+in]]=sum;
         }
       } // ---- end iel -------------------------
@@ -2034,10 +2127,10 @@ void MGSolDA::print_bc(std::string namefile, const int Level) {
         int indx=iel*NDOF_FEM;
         // element iel ----------------------------
         // vertices
-        for(int in=0; in<NDOF_P; in++) sol_c[in]= sol[_mgmesh._el_map[0][indx+in]];
+        for(int in=0; in<NDOF_P; in++) { sol_c[in]= sol[_mgmesh._el_map[0][indx+in]]; }
         for(int in=0; in<NDOF_FEM; in++) {    // mid-points
           double sum=0;
-          for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
+          for(int jn=0; jn<NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn]; }
           sol[_mgmesh._el_map[0][indx+in]]=sum;
         }
       } // ---- end iel -------------------------
@@ -2108,8 +2201,9 @@ void MGSolDA::read_u(
     _mgutils.read_Ihdf5(file_mesh,namedir_conn.str().c_str(),map_coarse);
 
     int offel_coarse=0; // # of element at Level for proc < _iproc
-    for(int jproc=0; jproc <_iproc; jproc++)
+    for(int jproc=0; jproc <_iproc; jproc++) {
       offel_coarse +=_mgmesh._off_el[0][jproc*_NoLevels+Level+1]-_mgmesh._off_el[0][jproc*_NoLevels+Level];
+    }
 
 
     for(int iel=0; iel <_mgmesh._off_el[0][_iproc*_NoLevels+Level+1]-
@@ -2126,7 +2220,7 @@ void MGSolDA::read_u(
     // reading loop over system varables
     for(int  ivar=0; ivar< _n_vars; ivar++) {
       int  el_nds=NDOF_FEM;
-      if(ivar >= _nvars[2]) el_nds=NDOF_P;    // quad and linear
+      if(ivar >= _nvars[2]) { el_nds=NDOF_P; }    // quad and linear
       // reading ivar param
       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);   // reading coarse quad solution (sol.xxx.h5)
       double Irefval = 1./_refvalue[ivar]; // units
@@ -2143,7 +2237,7 @@ void MGSolDA::read_u(
         // interpolation
         for(int in=0; in<el_nds; in++) {    // all element points
           double sum=0;
-          for(int jn=0; jn<NDOF_P; jn++) sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn];
+          for(int jn=0; jn<NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in*NDOF_P+jn]*sol_c[jn]; }
           sol_f[in]=sum;
         }
 
@@ -2168,7 +2262,7 @@ void MGSolDA::read_u(
     // reading loop over system varables
     for(int ivar=0; ivar< _nvars[2]+ _nvars[1]; ivar++) {
       int  el_nds=NDOF_FEM;
-      if(ivar >= _nvars[2]) el_nds=NDOF_P;    // quad and linear
+      if(ivar >= _nvars[2]) { el_nds=NDOF_P; }    // quad and linear
       // reading ivar param
       _mgutils.read_Dhdf5(file_sol,"/"+_var_names[ivar],sol);
       double Irefval = 1./_refvalue[ivar]; // units
@@ -2229,7 +2323,7 @@ void MGSolDA::read_u(
 /// and assemble the operator with (nvars_q) quad and (nvars_l) linear variables
 /// for each level (Level)
 void MGSolDA::ReadMatrix(const int Level,            //Level
-                         const  std::string& namefile,// file name
+                         const  std::string &namefile,// file name
                          SparseMatrixM &Mat,          // Matrix to read
                          const int nvars_in[]          // # quad variables
 //                            const int nvars_l           // # linear variables
@@ -2247,13 +2341,13 @@ void MGSolDA::ReadMatrix(const int Level,            //Level
   // reading matrix dimensions
   //initialize dimension
   int dim_qlk[3][3], ldim[2];// [*][*] row variable type column variable type
-  for(int aa=0; aa<3; aa++) for(int bb=0; bb<3; bb++) dim_qlk[aa][bb]=0;
+  for(int aa=0; aa<3; aa++) for(int bb=0; bb<3; bb++) { dim_qlk[aa][bb]=0; }
 
   for(int iql=0; iql<3; iql++) {
     for(int jql=0; jql<3; jql++) {
       std::ostringstream mode; mode << (iql)*10+(jql)*1;
       int status=Mat.read_dim_hdf5(namefile.c_str(),mode.str().c_str(),ldim); // reading dimensions
-      if(status==0) dim_qlk[iql][jql]=ldim[0];  //if "mode" found -> put the row number in dim_qlk[][]
+      if(status==0) { dim_qlk[iql][jql]=ldim[0]; }  //if "mode" found -> put the row number in dim_qlk[][]
     }
   }
 
@@ -2309,7 +2403,7 @@ void MGSolDA::ReadMatrix(const int Level,            //Level
 
   //prepare row indeces
   int ml[3]; int m=0;
-  for(int l=0; l<3; l++)  m += nvars_in[l]*dim_qlk[l][l];  // global last row
+  for(int l=0; l<3; l++) { m += nvars_in[l]*dim_qlk[l][l]; } // global last row
   int n=m;  // global last column
   ml[0]=(_mgmesh._off_el[0][_iproc*NoLevels+Level+1]-
          _mgmesh._off_el[0][_iproc*NoLevels+Level])*_el_dof[0];       // const local row
@@ -2412,8 +2506,8 @@ void MGSolDA::ReadMatrix(const int Level,            //Level
     for(int ivar=0; ivar<nvars_in[ilq]; ivar++) {  //cycle on variables of ilq type
       for(int  i1=0; i1<ml[ilq]; i1++) {  //cycle on the rows
         int i=ml_init[ilq]+i1; int i_top;
-        if(ilq!=0) i_top=_mgmesh._node_map[lev[ilq]][i];
-        else i_top=i; //for piecewise only
+        if(ilq!=0) { i_top=_mgmesh._node_map[lev[ilq]][i]; }
+        else { i_top=i; } //for piecewise only
         int ind=_node_dof[Level][i_top+(ivar+cont_var)*offset]-ml_start; // ind is local (per proc) row index
         for(int jlq=2; jlq>=0; jlq--) {  //cycle on type of variable (2=q,1=l,0=k) - column block
           int jlq1=(ilq+jlq)%3;
@@ -2456,7 +2550,7 @@ void MGSolDA::ReadMatrix(const int Level,            //Level
 /// for each level (Level)
 void MGSolDA::ReadProl(
   const int          Level,       // Level
-  const std::string& name,        // file name (reading from)
+  const std::string &name,        // file name (reading from)
   SparseMMatrixM    &Prol,        // Prolongation matrix
   const int         nvars_in[],   // # quad, linear and const variables
   int               node_dof_f[],
@@ -2472,7 +2566,7 @@ void MGSolDA::ReadProl(
 
   // reading dimensions
   int ldim[2]; int dim_qlk[3][2]; // [0][0] piecewise fine, [2][1] quad coarse
-  for(int aa=0; aa<3; aa++) for(int bb=0; bb<2; bb++) dim_qlk[aa][bb]=0;
+  for(int aa=0; aa<3; aa++) for(int bb=0; bb<2; bb++) { dim_qlk[aa][bb]=0; }
 
   for(int jql=0; jql<3; jql++) {
     std::ostringstream mode; mode << jql;
@@ -2546,7 +2640,7 @@ void MGSolDA::ReadProl(
   // pattern operator storage -----------------------------
   const  int offset=_mgmesh._NoNodes[_NoLevels-1];
   int lev[3];  lev[0]=Level-1; lev[1]=_NoLevels; lev[2]=Level-1;
-  if(Level>1) lev[1]=Level-2;
+  if(Level>1) { lev[1]=Level-2; }
 
   ///-------------------------------------------------------------------------------------
   /// [3] Write prolongator sparse structure----------------------------------------------
@@ -2592,7 +2686,7 @@ void MGSolDA::ReadProl(
 
   for(int  ilq=0; ilq<3; ilq++) {  //type of variable loop (0=k,1=l,2=q)
     int mll_var=0; //counter for preceding variables
-    for(int count=ilq+1; count<3; count++) mll_var+=nvars_in[count]*ml[count];
+    for(int count=ilq+1; count<3; count++) { mll_var+=nvars_in[count]*ml[count]; }
 
     for(int ivar=0; ivar<nvars_in[ilq]; ivar++) {  //loop on variables of ilq type
       for(int  i=ml_init[ilq]; i<ml_init[ilq]+ml[ilq]; i++) {  //row loop
@@ -2617,12 +2711,12 @@ void MGSolDA::ReadProl(
   for(int iql=0; iql<3; iql++) {  //type of variable loop (0=k,1=l,2=q)
     int iql1=2-iql;//to set the correct level (0 for quad, 1 for linear)
     int mll_var=0;//counter for preceding variables
-    for(int  count=iql+1; count<3; count++) mll_var+=nvars_in[count];
+    for(int  count=iql+1; count<3; count++) { mll_var+=nvars_in[count]; }
 
     for(int ivar=0; ivar<nvars_in[iql]; ivar++) {  //loop on variables of iql type
       int off_varl= (ivar+mll_var)*offset;
       for(int i=ml_init[iql]; i<ml_init[iql]+ml[iql]; i++) {  //row loop
-        int ind_irow=i; if(iql>0) ind_irow=_mgmesh._node_map[Level-iql1][i];
+        int ind_irow=i; if(iql>0) { ind_irow=_mgmesh._node_map[Level-iql1][i]; }
         int irow=node_dof_f[ind_irow+off_varl];             // dof of the row
         int ncol=length_row[iql][i+1]-length_row[iql][i];   // row length
 
@@ -2635,7 +2729,7 @@ void MGSolDA::ReadProl(
         for(int j=0; j<ncol; j++) {  // fill the row with values and the indices - column loop
           int jcol=j+length_row[iql][i];
           int jpos=pos_row[iql][jcol]; //set the position
-          int ind_jpos=jpos; if(iql>0) ind_jpos=_mgmesh._node_map[lev[iql]][jpos];
+          int ind_jpos=jpos; if(iql>0) { ind_jpos=_mgmesh._node_map[lev[iql]][jpos]; }
           ind[j]=node_dof_c[ind_jpos+off_varl];
 // 	    if (iql==1) std::cout<<"  bc[0]  "<< bc[0][ind[j]]<<"  pos  "<< ind[j]<<"\n";
         }//column loop
@@ -2652,7 +2746,7 @@ void MGSolDA::ReadProl(
           }
           (*valmat)(0,j) =tmp*val_row[iql][jcol]; //assign the value in the matrix
           int jpos=pos_row[iql][jcol]; //set the position
-          int ind_jpos=jpos; if(iql>0) ind_jpos=_mgmesh._node_map[lev[iql]][jpos];
+          int ind_jpos=jpos; if(iql>0) { ind_jpos=_mgmesh._node_map[lev[iql]][jpos]; }
           ind[j]=node_dof_c[ind_jpos+off_varl];
         }//column loop
         Prol.add_matrix(*valmat,tmp,ind);   //insert row in the Prolongator
@@ -2681,7 +2775,7 @@ void MGSolDA::ReadProl(
 /// for each level (Level)
 void MGSolDA::ReadRest(
   const int Level,      // Level
-  const std::string& name, // file name (reading from)
+  const std::string &name, // file name (reading from)
   SparseMMatrixM &Rest,    // Restriction Matrix
   const int nvars_in[],      // # const,linear quad variables
   int  node_dof_f[],         // dof map fine mesh
@@ -2698,7 +2792,7 @@ void MGSolDA::ReadRest(
 
   // reading dimensions
   int ldim[2]; int dim_qlk[3][2]; // [0][0] piecewise fine, [2][1] quad coarse
-  for(int aa=0; aa<3; aa++) for(int bb=0; bb<2; bb++)  dim_qlk[aa][bb]=0;
+  for(int aa=0; aa<3; aa++) for(int bb=0; bb<2; bb++) { dim_qlk[aa][bb]=0; }
 
   for(int jql=0; jql<3; jql++) {
     std::ostringstream mode; mode << jql;
@@ -2791,7 +2885,7 @@ void MGSolDA::ReadRest(
   // linear + quadratic  operator
   for(int  ilq=0; ilq<3; ilq++) {  //type of variable loop (0=k,1=l,2=q)
     int mll_var=0; //counter for preceding variables
-    for(int  count=ilq+1; count<3; count++) mll_var+=nvars_in[count]*ml[count];
+    for(int  count=ilq+1; count<3; count++) { mll_var+=nvars_in[count]*ml[count]; }
     for(int ivar=0; ivar<nvars_in[ilq]; ivar++) {  //loop on variables of ilq type
       for(int  i=ml_init[ilq]; i<ml_init[ilq]+ml[ilq]; i++) {  //row loop
         int len= (length_row[ilq][i+1]-length_row[ilq][i]);              // diag row length
@@ -2848,12 +2942,12 @@ void MGSolDA::ReadRest(
   for(int iql=0; iql<3; iql++) {  //type of variable loop (0=k,1=l,2=q)
     int iql1=2-iql;//to set the correct level (0 for quad, 1 for linear)
     int mll_var=0;//counter for preceding variables
-    for(int count=iql+1; count<3; count++) mll_var+=nvars_in[count];
+    for(int count=iql+1; count<3; count++) { mll_var+=nvars_in[count]; }
 
     for(int ivar=0; ivar<nvars_in[iql]; ivar++) {  //loop on variables of iql type
       int off_val_l= (ivar+mll_var)*offset;
       for(int i=ml_init[iql]; i<ml_init[iql]+ml[iql]; i++) {  //row loop
-        int top_node=i; if(iql>0) top_node=_mgmesh._node_map[lev[iql]][i];
+        int top_node=i; if(iql>0) { top_node=_mgmesh._node_map[lev[iql]][i]; }
         int irow=node_dof_c[top_node+off_val_l];          // dof of the row
         int ncol=length_row[iql][i+1]-length_row[iql][i]; // row length - # colunms
         int irow_top=_node_dof[_NoLevels-1][top_node+off_val_l];
@@ -2863,7 +2957,7 @@ void MGSolDA::ReadRest(
         for(int j=0; j<ncol; j++) {  // fill the row with values and the indices - column loop
           int jcol=j+length_row[iql][i];
           int jpos=pos_row[iql][jcol]; //set the position
-          int ind_jpos=jpos; if(iql>0) ind_jpos=_mgmesh._node_map[Level+1-iql1][jpos];
+          int ind_jpos=jpos; if(iql>0) { ind_jpos=_mgmesh._node_map[Level+1-iql1][jpos]; }
           ind[j] =node_dof_f[ind_jpos+off_val_l];
           (*valmat)(0,j) =
             (bc[0][irow_top]%2)*
@@ -2917,7 +3011,7 @@ void MGSolDA::MGTimeStep(const double time, const int) {
   GenMatRhs(time,_NoLevels-1,1);
 
   /// [b] Assemblying of the other matrices with GenMatRhs(time,level,0) for all levels
-  for(int Level = 0 ; Level < _NoLevels-1; Level++) GenMatRhs(time,Level,0);
+  for(int Level = 0 ; Level < _NoLevels-1; Level++) { GenMatRhs(time,Level,0); }
 
 #if    PRINT_TIME==1
   std::clock_t end_time=std::clock();
@@ -2973,7 +3067,7 @@ void  MGSolDA::GenMatRhs(
   int elb_ndof[3];
   elb_ndof[0]=NDOF_BK; elb_ndof[1]=NDOF_PB; elb_ndof[2]=NDOF_FEMB;  // number of element boundary dofs
   int el_mat_nrows =0;                                              // number of matrix rows (dofs)
-  for(int ideg=0; ideg<3; ideg++) el_mat_nrows +=_nvars[ideg]*_el_dof[ideg];
+  for(int ideg=0; ideg<3; ideg++) { el_mat_nrows +=_nvars[ideg]*_el_dof[ideg]; }
   int el_mat_ncols = el_mat_nrows;                    // square matrix
   std::vector<int> el_dof_indices(el_mat_ncols);      // element dof vector
 
@@ -2982,7 +3076,7 @@ void  MGSolDA::GenMatRhs(
   double _ub_g[3][14];                                     // values of external fields
 
   // element matrix and rhs  (mode 0= matrix only or mode 1=matrix+rhs) ---------------------------
-  A[Level]->zero(); if(mode ==1) b[Level]->zero();                 // global matrix A and rhs b
+  A[Level]->zero(); if(mode ==1) { b[Level]->zero(); }                 // global matrix A and rhs b
   DenseMatrixM KeM; DenseVectorM FeM;                              // local  matrix KeM and rhs FeM
   KeM.resize(el_mat_nrows,el_mat_ncols); FeM.resize(el_mat_nrows); // resize local matrix and rhs
 
@@ -3016,7 +3110,7 @@ void  MGSolDA::GenMatRhs(
 
     // grid and gaussian points
     for(int idim=0; idim<DIMENSION; idim++) {
-      for(int d=0; d< NDOF_FEM; d++) _data_eq[2].ub[idim*NDOF_FEM+d]=xx_qnds[idim*NDOF_FEM+d];  // element nodes xxg (DIM)
+      for(int d=0; d< NDOF_FEM; d++) { _data_eq[2].ub[idim*NDOF_FEM+d]=xx_qnds[idim*NDOF_FEM+d]; }  // element nodes xxg (DIM)
       // element grid distance
     }
     // element field values
@@ -3066,7 +3160,7 @@ void  MGSolDA::GenMatRhs(
       for(int i=0; i<_el_dof[2]; i++)     {    //  --- QUADRATIC ---
         // set up row i
         const double phii_g=_phi_g[2][i];
-        for(int idim=0; idim< ndim; idim++)  dphiidx_g[2][idim]=_dphi_g[2][i+idim*_el_dof[2]];
+        for(int idim=0; idim< ndim; idim++) { dphiidx_g[2][idim]=_dphi_g[2][i+idim*_el_dof[2]]; }
 //         int gl_node=el_conn[i];
 
         for(int ivar=0; ivar<_nvars[2]; ivar++) {
@@ -3107,7 +3201,7 @@ void  MGSolDA::GenMatRhs(
       for(int i=0; i<_el_dof[1]; i++)     {  //    --- LINEAR ---
         // set up row i
         const double phii_g=_phi_g[1][i];
-        for(int idim=0; idim< ndim; idim++)  dphiidx_g[1][idim]=_dphi_g[1][i+idim*_el_dof[1]];
+        for(int idim=0; idim< ndim; idim++) { dphiidx_g[1][idim]=_dphi_g[1][i+idim*_el_dof[1]]; }
 
         for(int ivar=0; ivar<_nvars[1]; ivar++) {
 
@@ -3395,14 +3489,14 @@ void  MGSolDA::GenMatRhs(
 //     std::cout << FeM << "\n";
     /// e) Global assemblying energy equation
     A[Level]->add_matrix(KeM,el_dof_indices);                  // global matrix
-    if(mode == 1)   b[Level]->add_vector(FeM,el_dof_indices);  // global rhs
-    
+    if(mode == 1) { b[Level]->add_vector(FeM,el_dof_indices); } // global rhs
+
   } // end of element loop
   // clean
   el_dof_indices.clear();
   A[Level]->close();
 //      A[Level]->print();
-  if(mode == 1) b[Level]->close();
+  if(mode == 1) { b[Level]->close(); }
 #ifdef PRINT_INFO
   std::cout<< " Matrix Assembled(DA)  for  Level "<< Level << " dofs " << A[Level]->n() <<"\n";
 #endif
@@ -3415,9 +3509,9 @@ void  MGSolDA::GenMatRhs(
 // ============================================================================
 /// This function reads Boundary conditions  from function
 void MGSolDA::bc_read(
-   int /*face_id_node*/,  ///<  face identity          (in)
+  int /*face_id_node*/,  ///<  face identity          (in)
   int  /*mat_flag*/,     ///<  volume identity         (in)
-  double /*xp*/[],       ///< xp[] node coordinates    (in) 
+  double /*xp*/[],       ///< xp[] node coordinates    (in)
   int bc_Neum[],         ///< Neuman (1)/Dirichlet(0)  (out)
   int bc_flag[]          ///< boundary condition flag  (out)
 ) {// =========================================================================
@@ -3432,9 +3526,9 @@ void MGSolDA::bc_read(
   }
 }
 
-double MGSolDA::MGFunctional ( double, double &){
-  std:cout << "Not implemented in MsolverDA"; return 0.;
-  
+double MGSolDA::MGFunctional(double, double &) {
+std:cout << "Not implemented in MsolverDA"; return 0.;
+
 };
 
 void MGSolDA::ic_read(
@@ -3444,7 +3538,7 @@ void MGSolDA::ic_read(
   int iel,  // element
   double ic[]    // Initial value of the [ivar] variable of the system
 ) {
-  for(int ivar=0; ivar<_n_vars; ivar++) ic[ivar]=0.;
+  for(int ivar=0; ivar<_n_vars; ivar++) { ic[ivar]=0.; }
   //xp[0]*(1.-xp[0])*xp[1]*(1.-xp[1]);
 }
 // double MGSolDA::eval_var1(double in[]){return 0.;}

@@ -12,6 +12,7 @@
  #include "Printinfo_conf.h"
 #include "parallelM.h"
 #include "parallel_objectM.h"
+#include "numeric_vectorM.h"
 
 // format class
 #include <hdf5.h>
@@ -107,7 +108,7 @@ public:
   /// Mesh coordinates (for points (x,y,z))
   void nodesxyz(double xyzvect[], const int  n_nodes) const;  
   ///@}
-  
+  void MoveMesh(const int dir,NumericVectorM &x_old);
   
   ///@{  \name CONNECTIVITY 
   void conn (int gl_conn[],const int  ifem,const int indx_mesh) const; ///< Connectivity for Mesh (indx_mesh)

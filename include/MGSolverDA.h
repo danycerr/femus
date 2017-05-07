@@ -85,7 +85,7 @@ public:
     double _phi_g[3][NDOF_FEM];              ///< shape field (0-1-2 degree)
     double _dphi_g[3][NDOF_FEM*DIMENSION];   ///< shape derivative  (0-1-2 degree)
     double _ddphi_g[3][NDOF_FEM*DIMENSION*DIMENSION];   ///< shape second derivative  (0-1-2 degree)
-
+   
     //  external field
     external_field _data_eq[3];              ///< external data structure
 
@@ -93,6 +93,7 @@ public:
     int   _el_dof[3];   ///< number of dof in each element  (piecewise, linear, quadratic)
     MGFE* _fe[3];       ///< fem  (piecewise linear,piecewise quadratic)
     double _dt =0.1;
+    int _dir=0;
 // ========================================================================
 ///@{ \name  Constructor destructor memory allocation
 // ========================================================================
@@ -401,7 +402,7 @@ public:
     virtual double eval_var3 ( double [] ) {
         return 0.;
     };
-///@}
+///@}  double _xxg[DIMENSION];
 };
 
 #endif

@@ -77,7 +77,9 @@
 #endif
 
 #include "MGSolverDA.h"
-
+#ifdef   TWO_PHASE
+#include "MGSolverCC.h"
+#endif
 
 // ====================================================
 /// This function constructs all the MGSystems
@@ -491,7 +493,15 @@ void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
   // ================================================================================
   return;
 }
-
+#ifdef   TWO_PHASE
+void  MGEquationsSystem::set_mgcc(MGSolCC & cc) {
+   // Reading operators
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase* mgsol = eqn->second;// get the pointer
+    mgsol -> set_mgcc(cc);          // set mgcc
+  }
+}
+#endif
 // ====================================================
 /// This sets dof initial and boundary conditions and sets the operators
 void  MGEquationsSystem::setDofBcOpIc() {

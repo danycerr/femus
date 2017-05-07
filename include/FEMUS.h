@@ -23,6 +23,10 @@ class MGFEMap;
 class MGTimeLoop;
 
 class BoundInterp;
+#ifdef   TWO_PHASE
+class MGSolCC;
+#endif
+
 
 class FEMUS {
   // ==========================================================================
@@ -148,6 +152,11 @@ public:
   inline void setMeshName(std::string meshname){MeshName = meshname;};
   inline std::string getMeshName(){return MeshName;};
   inline string GetMeshDir(){return _mg_utils->_mesh_dir;};
+  
+  
+  #ifdef   TWO_PHASE
+void set_mgcc(MGSolCC & cc);
+#endif
 // =================  with MED lib ===============================================
 // =================  with MED lib ===============================================   
 #ifdef HAVE_MED

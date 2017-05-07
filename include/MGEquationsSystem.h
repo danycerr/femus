@@ -5,6 +5,7 @@
 using namespace std;
 #include <string>
 
+#include "Equations_conf.h"
 #include "MGSolverBase.h"
 #include "MGSystem.h"
 class MGUtils;
@@ -12,6 +13,9 @@ class MGUtils;
 class MGMesh;
 class MGFEMap;
 
+#ifdef   TWO_PHASE
+class MGSolCC;
+#endif
 ///This class contains the system map 
 
 class MGEquationsSystem: public MGSystem {  
@@ -63,7 +67,9 @@ public:
   inline const_iterator begin() const { return _equations.begin();}
   inline const_iterator   end() const { return _equations.end();}
   ///@}
-
+#ifdef   TWO_PHASE
+void  set_mgcc(MGSolCC  & cc);
+#endif
   void setDofBcOpIc() ;
   
   void eqnmap_steady_loop( 

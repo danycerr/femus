@@ -1,0 +1,197 @@
+#include "Equations_conf.h"
+
+
+
+// ============================================
+#ifdef DS_EQUATIONS // 3D-2D Energy equation
+// ============================================
+
+#include "MGSolverDS.h"
+#include "MGGeomEl.h"
+
+// configuration files -----------
+#include "MGFE_conf.h"
+#include "Printinfo_conf.h"
+#include "MGEquationsSystem.h"
+
+// class local configuration -------
+
+
+// local include -------------------
+// #include "MGMesh.h"
+#include "MGSystem.h"
+// #include "numeric_vectorM.h"
+// #include "dense_vectorM.h"
+// #include "sparse_matrixM.h"
+// #include "dense_matrixM.h"
+// #include "linear_solverM.h"
+// #include "parallelM.h"
+
+
+
+#include <Draw3DFSI.C>
+
+// ========================================
+/// This function  defines the boundary conditions for the NS system:
+void MGSolDS::bc_intern_read(
+    int bc_gam,
+    int mat_gam,
+    double xp[],   // xp[] is the NON-DIMENSIONAL node coordinates
+    int bc_Neum[], // normal
+    int bc_flag[]  // boundary condition flag
+) {// ===================================
+#if DIMENSION == 2
+   if (mat_gam==2){ bc_flag[0]=0;bc_Neum[0]=1; }
+   if (mat_gam==4){ bc_flag[0]=0;bc_Neum[0]=3 ;}
+   if (bc_gam==1000)   { bc_flag[0]=0;bc_Neum[0]=5;}
+// // nogroup
+//     double h=1./20.;
+//     if( xp[1]<3*h+BDRY_TOLL) {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=3 ;
+//     }
+//     else {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=1 ;
+//     }
+//     if (fabs(xp[1]-3*h)< BDRY_TOLL) {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=5 ;
+//     }
+#endif
+#if DIMENSION==3
+// //==============================================================
+// // // with bc_gam
+// //==============================================================
+//    if (mat_gam==2){ bc_flag[0]=0;bc_Neum[0]=1; }
+//    if (mat_gam==4){ bc_flag[0]=0;bc_Neum[0]=3 ;}
+//    if (bc_gam==1000)   { bc_flag[0]=1;bc_Neum[0]=5;}
+// //==============================================================
+// // // with bc_gam
+// //==============================================================
+
+    Draw3DFSI::UserDS_init(bc_flag,  bc_Neum);
+    double unit=1./20.;
+    double mtoll=1.e-6;
+//   double x1=9*unit;double y1=9*unit;double z1=0.;
+//   double x2=x1+2*unit;double y2=y1+2*unit;double z2=z1+10*unit;
+//   Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, x1,x2,y1,y2,z1,z2 );	//volume
+//   Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, x2-mtoll,x2+mtoll,y1-mtoll,y2+mtoll,z1-mtoll,z2 +mtoll);	//back
+//   Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, x1-mtoll,x1+mtoll,y1-mtoll,y2+mtoll,z1-mtoll,z2+mtoll);	//front
+//   Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, x1-mtoll,x2+mtoll,y1-mtoll,y1+mtoll,z1-mtoll,z2+mtoll );	//right
+//   Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, x1-mtoll,x2+mtoll,y2-mtoll,y2+mtoll,z1-mtoll,z2+mtoll);	//left
+//   Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, x1-mtoll,x2+mtoll,y1-mtoll,y2+mtoll,z2-mtoll,z2 +mtoll);	//top
+//
+//esterno
+    double ex1=0*unit;
+    double ey1=0*unit;
+    double ez1=0.;
+    double ex2=20*unit;
+    double ey2=20*unit;
+    double ez2=10*unit;
+    //interno
+    double ix1=2*unit;
+    double iy1=2*unit;
+    double iz1=2*unit;
+    double ix2=18*unit;
+    double iy2=18*unit;
+    double iz2=10*unit;
+
+
+// //     Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, ex1,ex2,ey1,iy1,ez1,ez2 );	//volume
+// //     Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, ex1,ex2,iy2,ey2,ez1,ez2 );	//volume
+// //     Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, ex1,ix1,iy1,iy2,ez1,ez2 );	//volume
+//     Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, ix2,ex2,iy1,iy2,ez1,ez2 );	//volume
+//     Draw3DFSI::UserDS_internal_rectangle( xp, bc_flag,  bc_Neum, ix1,ix2,iy1,iy2,ez1,iz1 );	//volume piano servatoio
+//     //superiore
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ex2+mtoll,ey1-mtoll,iy1+mtoll,ez2-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ex2+mtoll,iy2-mtoll,ey2+mtoll,ez2-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ix1+mtoll,iy1-mtoll,iy2+mtoll,ez2-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix2-mtoll,ex2+mtoll,iy1-mtoll,iy2+mtoll,ez2-mtoll,ez2 +mtoll);
+//     //esterno
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ex2+mtoll,ey1-mtoll,ey1+mtoll,ez1-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ex2+mtoll,ey2-mtoll,ey2+mtoll,ez1-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex1-mtoll,ex1+mtoll,ey1-mtoll,ey2+mtoll,ez1-mtoll,ez2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ex2-mtoll,ex2+mtoll,ey1-mtoll,ey2+mtoll,ez1-mtoll,ez2 +mtoll);
+//     //interno
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix1-mtoll,ix2+mtoll,iy1-mtoll,iy1+mtoll,iz1-mtoll,iz2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix1-mtoll,ix2+mtoll,iy2-mtoll,iy2+mtoll,iz1-mtoll,iz2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix1-mtoll,ix1+mtoll,iy1-mtoll,iy2+mtoll,iz1-mtoll,iz2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix2-mtoll,ix2+mtoll,iy1-mtoll,iy2+mtoll,iz1-mtoll,iz2 +mtoll);
+//     Draw3DFSI::UserDS_plane_interface( xp, bc_flag,  bc_Neum, ix1-mtoll,ix2+mtoll,iy1-mtoll,iy2+mtoll,iz1-mtoll,iz1 +mtoll); //piano interno
+// //==============================================================
+// // // without bc_gam
+// //==============================================================
+
+//    if (xp[0]<1-1.e-6){ bc_flag[0]=1;bc_Neum[0]=1; }
+//    if (xp[0]>1+1.e-6){ bc_flag[0]=1;bc_Neum[0]=3 ;}
+//    if (fabs(xp[0]-1.)<1.e-6)   { bc_flag[0]=1;bc_Neum[0]=5;}
+//==============================================================
+// // with bc_gam
+//==============================================================
+   if (mat_gam==2){ bc_flag[0]=0;bc_Neum[0]=1; }
+   if (mat_gam==4){ bc_flag[0]=0;bc_Neum[0]=3 ;}
+   if (bc_gam==1000)   { bc_flag[0]=0;bc_Neum[0]=5;}
+#endif
+    return;
+}
+
+void MGSolDS::ic_read(
+    int /*bc_gam*/,
+    int /*mat_gam*/,
+    double /*xp*/[],
+    double u_value[]
+) {// =======================================
+#if DIMENSION==2 // --------------  2D //--------------------------
+    u_value[0] = 0.;
+//    u_value[1] = 0.;
+#else  // //-----------------------//------------------------------------
+    // xp[]=(xp,yp,zp) u_value[]=(u,v,w,p)
+    u_value[0]= ((_dir==0)? 0.:0.);
+//   u_value[0]=0.;
+//   u_value[1] =1.;
+//   u_value[2] = 2.;
+#endif // //-------------------------------------------
+    return;
+}
+
+// ========================================
+/// This function  defines the boundary conditions for the NS system:
+void MGSolDS::bc_read(
+    int bc_gam,
+    int mat_gam,
+    double xp[],          // xp[] is the NON-DIMENSIONAL node coordinates
+    int bc_Neum[], // normal
+    int bc_flag[]         // boundary condition flag
+) {// ===================================
+    //     0 ->  single component
+    //     +4 ->  nonhomogeneous
+    //     +2 -> tg
+    //     +1 ->  normal
+// ===================================
+//   double ILref = 1./_lref;
+
+//default
+if (bc_gam<20) {bc_flag[0]=0;bc_Neum[0]=0;}
+else if (bc_gam<30) {bc_flag[0]=0;bc_Neum[0]=3;}
+else if (bc_gam<2000 ) {bc_flag[0]=0;bc_Neum[0]=4;}
+//end default
+// // // no groups
+  
+    
+//     double h=1./20.;
+//     if( xp[1]<3*h+BDRY_TOLL) {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=3 ;
+//     }
+//     else {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=1 ;
+//     }
+//     if (fabs(xp[1]-3*h)< BDRY_TOLL) {
+//         bc_flag[0]=0;
+//         bc_Neum[0]=5 ;
+//     }
+//     return;
+}
+#endif

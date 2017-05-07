@@ -18,7 +18,9 @@ class MGSystem       ;
 class MGEquationsSystem ;
 class MGFEMap        ;
 class MGMesh         ;
-
+ #ifdef   TWO_PHASE
+  class MGSolCC;
+#endif
 
 ///This class is the basic equation class
 class MGSolBase
@@ -35,7 +37,7 @@ protected:
 // //   MGSystem         & _mgphys;   ///<  parameter class pointer
 //   MGFEMap          & _mgfemap;  ///<  FEM class pointer
   MGMesh           & _mgmesh;   ///<  mesh pointer
-  MGEquationsSystem   & _mgeqnmap; ///<  equation map  pointer
+  MGEquationsSystem   & _mgeqnmap; ///<  equation map  pointerz
   ///< 
   ///@}
    //  ----------------------------------
@@ -58,6 +60,9 @@ protected:
    ///< 
   ///@}
 public:
+     #ifdef   TWO_PHASE
+    MGSolCC *_msolcc;
+    #endif
      double  _control;
     MGUtils          & _mgutils;  ///<  utility class pointer
 //   MGSystem         & _mgphys;   ///<  parameter class pointer
@@ -136,7 +141,9 @@ public:
   ///< \param[in]  <kvar0>   offset  variable for  uold 
   ///< \param[out]  <uold>   solution
   
-  
+  #ifdef   TWO_PHASE
+  void set_mgcc(MGSolCC & cc);
+#endif
   // ----------------------------------------------------------------  
  void  get_el_sol (
   const int ivar0,              ///< \param[in]   <ivar0>   initial variable  

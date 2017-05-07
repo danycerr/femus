@@ -8,7 +8,9 @@
 #include "MGFE_conf.h"
 // class include
 #include "MGSolverBase.h"
-
+ #ifdef   TWO_PHASE
+#include "MGSolverCC.h"
+#endif
 // local inlude -----------------
 #include "MGUtils.h"
 #include "MGSystem.h"
@@ -42,7 +44,11 @@ MGSolBase::MGSolBase(MGEquationsSystem& e_map_in, // equation map
     _mgeqnmap(e_map_in),
     _NoLevels(e_map_in._mgutils.get_par("nolevels")), //you can do that
     _eqname(eqname_in),
-    _n_vars(nvars_in[0]+nvars_in[1]+nvars_in[2]), _var_names(NULL), _refvalue(NULL) {
+    _n_vars(nvars_in[0]+nvars_in[1]+nvars_in[2]), _var_names(NULL), _refvalue(NULL)
+#ifdef TWO_PHASE
+   , _msolcc(NULL) 
+#endif    
+    {
 
   _nvars[0]= nvars_in[0]; //Lagrange piecewise constant variables
   _nvars[1]= nvars_in[1]; //Lagrange piecewise linear variables
@@ -81,6 +87,11 @@ MGSolBase::MGSolBase(MGEquationsSystem& e_map_in, // equation map
   for (int l=0;l<_NoLevels;l++) _solver[l]=
     LinearSolverM::build(_mgmesh._comm.comm(),LSOLVER).release();
     _control=0.;
+  #ifdef   TWO_PHASE
+  
+#endif
+   
+  
   return;
 }
 
@@ -127,6 +138,9 @@ void MGSolBase::clear(
   }
 }
 
+ #ifdef   TWO_PHASE
+  void MGSolBase::set_mgcc(MGSolCC & cc){_msolcc=&cc;}
+#endif
 // ===============================================================
 /// This  function reads all the Operators from files
 void MGSolBase::MGDofBcOp(
@@ -357,7 +371,7 @@ void  MGSolBase::get_el_sol_piece(
        id=0; id<el_nds; id++)    {
     // quadratic -------------------------------------------------
     for (int ivar=0; ivar<nvars; ivar++) {  //ivar is like idim
-      const int  kdof_top = _node_dof[_NoLevels-1][iel+id+(ivar+ivar0)*offset]; // dof from top level
+      const int  kdof_top = _node_dof[_NoLevels-1][iel*el_nds+id+(ivar+ivar0)*offset]; // dof from top level
       uold[ id +(ivar+kvar0)*NDOF_FEM]= ((*x_old[_NoLevels-1])(kdof_top));     // element sol
     } // end quadratic ------------------------------------------------
   }

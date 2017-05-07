@@ -410,7 +410,7 @@ void MMed::GaussLoop(
   double *Coordinates=new double[pte_coord_size]; for(int i=0; i<pte_coord_size; i++) { Coordinates[i]=PointsCoords[i]; }
   double normal[DIMENSION];
   if(BulkMedium) { _fe[XOrd]->normal_g(Coordinates,normal); }
-  double phi_g[DIMENSION][NDOF_FEM];
+  double phi_g[3][NDOF_FEM];
   const double pi = 2.*acos(0);    //3.1415;
   double InvJac[3][DIMENSION*DIMENSION];
   for(int qp=0; qp<  QPoints; qp++) {

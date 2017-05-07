@@ -484,6 +484,38 @@ void MGMesh::print_xmf_geometry(
 
 
 
+// =========================================================================================
+/// This function controls the assembly and the solution of the T_equation system:
+void MGMesh::MoveMesh(const int dir, NumericVectorM &x_old) { // ------------------------------------
+
+
+  const int flag_moving_mesh = _mgutils.get_par("moving_mesh");
+  
+  if(flag_moving_mesh) {
+// #ifdef FINE_MOVEMENT
+    /// E) mesh update
+    double ww=1.;    
+    const int n_nodes=_NoNodes[_NoLevels-1];
+    const int offsetp=dir*n_nodes;
+    
+    
+    for(int inode=0; inode<n_nodes; inode++) {
+    _xyz[inode+offsetp] =_xyzo[inode+offsetp]+ww*x_old(inode);
+    }
+// #endif
+// #ifdef COARSE_MOVEMENT
+//     MoveMesh(_NoLevels-1);
+// // disp[_NoLevels-1]->zero();
+//     for(int inode=0; inode<n_nodes; inode++) {
+//       _mgmesh._xyz[inode+offsetp] += (*disp[_NoLevels-1])(inode);
+//       _mgmesh._dxdydz[inode+offsetp]= (*disp[_NoLevels-1])(inode);
+//     }
+//     MoveMesh(_NoLevels-1);
+// #endif
+  }
+  // ==============================================================
+  return;
+}
 
 // ===============================================
 //           HDF5 FUNCTION
@@ -497,11 +529,9 @@ void MGMesh::print_xmf_geometry(
 
 void MGMesh::read_c() {  // ======================
 
-
   const int  restart = _mgutils.get_par("restart");
 
   if(restart == 0)  { //=================================
-
     std::string    input_dir = _mgutils._inout_dir;
     std::string    basemesh = _mgutils.get_file("BASEMESH");
 
@@ -539,7 +569,6 @@ void MGMesh::read_c() {  // ======================
     , H5P_DEFAULT
 #endif
     ),H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,_NoNodes);
-
     // Reading  _xyz ----------------
     double ILref = 1./_Lref;
     int  n_nodes =_NoNodes[_NoLevels-1];
@@ -570,18 +599,15 @@ void MGMesh::read_c() {  // ======================
     , H5P_DEFAULT
 #endif
    ),
-                   H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_nd[0]);
+   H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_nd[0]);
     _off_nd[1]=new int[_n_subdom*_NoLevels+1];
     status=H5Dread(H5Dopen(file_id, "/NODES/MAP/OFF_ND1"
 #if HDF5_VERSIONM != 1808
     , H5P_DEFAULT
 #endif
     ),
-                   H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_nd[1]);
-
-
+    H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_nd[1]);
     // Reading  _NoElements --------------
-
     _off_el=new int*[_NoFamFEM];                 //volume and boundary
     _off_el[0]=new int [_n_subdom*_NoLevels+1];  //offset for VOLUME
     status=H5Dread(H5Dopen(file_id, "/ELEMS/FEM0/OFF_EL"
@@ -589,15 +615,14 @@ void MGMesh::read_c() {  // ======================
     , H5P_DEFAULT
 #endif
     ),
-                   H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_el[0]);
+    H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_el[0]);
     _off_el[1]=new int [_n_subdom*_NoLevels+1];  //offset for boundary
     status=H5Dread(H5Dopen(file_id, "/ELEMS/FEM1/OFF_EL"
 #if HDF5_VERSIONM != 1808
     , H5P_DEFAULT
 #endif
     ),
-                   H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_el[1]);
-
+    H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,_off_el[1]);
     // Number of elements (for each level)
     _NoElements=new int *[_NoFamFEM];  //quadratic and linear
     for(int  ifem=0; ifem<_NoFamFEM; ifem++) {
@@ -706,7 +731,7 @@ void MGMesh::read_c() {  // ======================
 
     const int  ndigits  = _mgutils.get_par("ndigits");
 
-    std::ostringstream meshname_xyz;  meshname_xyz <<  inout_dir << basemesh << "." << std::setw(ndigits) << std::setfill('0') << restart << ".h5";
+    std::ostringstream meshname_xyz;  meshname_xyz <<  inout_dir << basemesh << "." << std::setw(ndigits) << std::setfill('0') << 0 << ".h5";
     std::ostringstream meshname;          meshname << inout_dir << basemesh << ".h5";
     std::cout << " Reading mesh from= " <<  meshname.str() <<  std::endl;
     std::cout << " Reading mesh coordinates from = " <<  meshname_xyz.str() <<  std::endl;
