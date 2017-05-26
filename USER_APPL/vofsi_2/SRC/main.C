@@ -94,10 +94,11 @@ int main(int argc, char** argv)
   MGGeomEl *mggeomel;  mggeomel=new  MGGeomEl();
 
   // system problem =========================================================
-  std::vector<FIELDS> myproblemP; myproblemP.resize(1);
+  std::vector<FIELDS> myproblemP; myproblemP.resize(3);
   // Problem to solve for each mesh
   myproblemP[0]=FS_F;
-//   myproblemP[1]=T_F;
+  myproblemP[1]=CO_F;
+  myproblemP[2]=T_F;
   int group_mesh=2;
   int group_mesh2=4;
   int interface_vel=1; int interface_c=2; int interface_c2=3;
@@ -182,7 +183,6 @@ int main(int argc, char** argv)
     const  ParaMEDMEM::MEDCouplingUMesh * SourceMesh_update  = P1.getUMesh(111);
     bdy2 = P1.getValuesOnBoundary(111, "FSI0",DIMENSION);    
     BoundInterp VOL_updated = BoundInterp(SourceMesh_update,TargetMesh,Volume);
-    // BoundInterp VOL_updated2 = BoundInterp(SourceMesh_update,TargetMesh,Volume);
     TargetField = VOL_updated.InterpolatedField(bdy2);
     if(t_step == n_steps){
       VOL_updated.PrintMed(bdy2,"sourcefield2",0);

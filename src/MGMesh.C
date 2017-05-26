@@ -576,6 +576,14 @@ void MGMesh::read_c() {  // ======================
     _xyzo=new double[_dim*n_nodes];            //double scale[3]
      _dxdydz=new double[_dim*n_nodes];
     double *coord; coord=new double[n_nodes];
+    
+      for(int  inode=0; inode<DIMENSION*n_nodes; inode++) {
+        _xyz[inode] =0.; //nondimensionalization
+         _xyzo[inode]=0.; //nondimensionalization
+          _dxdydz[inode]=0.; //nondimensionalization
+      }
+    
+    double para_rot=4.;
     for(int  kc=0; kc<_dim; kc++) {
       std::ostringstream Name; Name << "NODES/COORD/X" << kc+1;
       status=H5Dread(H5Dopen(file_id,Name.str().c_str()
@@ -583,7 +591,22 @@ void MGMesh::read_c() {  // ======================
     , H5P_DEFAULT
 #endif        
       ),H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,coord);
+      
+      
+      
       for(int  inode=0; inode<n_nodes; inode++) {
+      
+//         _xyz[inode+0*n_nodes] +=(1-kc)*cos(-3.141592/para_rot)*coord[inode]*ILref
+//                                   -(kc)*sin(-3.141592/para_rot)*coord[inode]*ILref; //nondimensionalization
+//          _xyzo[inode+0*n_nodes] +=(1-kc)*cos(-3.141592/para_rot)*coord[inode]*ILref
+//                                   -(kc)*sin(-3.141592/para_rot)*coord[inode]*ILref; //nondimensionalization
+//            _xyz[inode+1*n_nodes] +=(1-kc)*sin(-3.141592/para_rot)*coord[inode]*ILref
+//                                   +(kc)*cos(-3.141592/para_rot)*coord[inode]*ILref; //nondimensionalization
+//          _xyzo[inode+1*n_nodes] +=(1-kc)*sin(-3.141592/para_rot)*coord[inode]*ILref
+//                                   +(kc)*cos(-3.141592/para_rot)*coord[inode]*ILref; //nondimensionalization                      
+                                  
+//           _dxdydz[inode+kc*n_nodes]=0.; //nondimensionalization
+       
 	_xyz[inode+kc*n_nodes]=coord[inode]*ILref; //nondimensionalization
 	_xyzo[inode+kc*n_nodes]=coord[inode]*ILref; //nondimensionalization
          _dxdydz[inode+kc*n_nodes]=0.; //nondimensionalization

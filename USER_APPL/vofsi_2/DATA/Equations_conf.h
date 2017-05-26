@@ -48,8 +48,11 @@
                                                               
  //  Temperature equation ---------------------------        
  //  -------------------------------------------------        
-//     #define T_EQUATIONS  (1)
-                                                              
+    #define T_EQUATIONS  (1)
+  
+   //  vof color projection equation ---------------------------    
+ //  -------------------------------------------------   
+    #define COLOR_EQUATIONS  (1)                                                          
                                                               
  //  Energy Turbulence   ----------------------------        
  //  KE  coupled -> 3  splitted -> 2                          

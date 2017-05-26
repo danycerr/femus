@@ -174,6 +174,8 @@ src_clean:
 	@$(MAKE) clean
 	@rm -f ../../src/*.o ../../contrib/matrix/*.o ../../contrib/parallel/*.o
 
+*.h:*.C 
+
 all_clean:
 	@$(MAKE) resu_clean
 	@$(MAKE) src_clean

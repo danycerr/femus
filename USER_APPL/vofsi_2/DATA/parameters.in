@@ -70,7 +70,7 @@ rhos 1000.
   hs   0.001
 # gravity 
  dirgx  0
- dirgy  -1.
+ dirgy  -.00001
  dirgz  0
 # --------------------------------------------------
 // # /Physical Properties 

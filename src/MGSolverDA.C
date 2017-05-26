@@ -138,15 +138,15 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
 
 //  #endif
 #endif
-#ifdef COLOR_EQUATIONS
-  for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FS_F) {
-      _data_eq[0].tab_eqs[CO_F]=n_index;                      //  table
-      _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("CO_F"); //Navier-Stokes equation pointer
-      _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+1;//_nvars[0];  // _data_eq[2].ub index
-      _data_eq[0].n_eqs++;  // number of quadratic system
-      n_index++; // update counter
-    }
-#endif
+// #ifdef COLOR_EQUATIONS
+//   for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== FS_F) {
+//       _data_eq[0].tab_eqs[CO_F]=n_index;                      //  table
+//       _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("CO_F"); //Navier-Stokes equation pointer
+//       _data_eq[0].indx_ub[n_index] =_data_eq[0].indx_ub[n_index]+1;//_nvars[0];  // _data_eq[2].ub index
+//       _data_eq[0].n_eqs++;  // number of quadratic system
+//       n_index++; // update counter
+//     }
+// #endif
 // #ifdef NS_EQUATIONS
 // if(NDOF_K==1)
 // for(int iname=0;iname<n_equations;iname++)
@@ -463,7 +463,29 @@ if(pbName[iname]== FS_F || pbName[iname]==FSX_F || pbName[iname]==FSY_F || pbNam
 // ==========================    end   FSI        =======================================================
 // ===================================================================================================
 
-
+#ifdef COLOR_EQUATIONS  /// [4] Temperature -> 2 (T_EQUATIONS)
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== CO_F) {
+//       _data_eq[2].tab_eqs[CO_F]=n_index;                                    // table
+//       _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("C");                // equation pointer
+//       _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+//       _data_eq[2].n_eqs++;                                               // number of quadratic system
+//       n_index++;
+//       // update counter
+      /// color
+      _data_eq[2].tab_eqs[CO_F]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("C");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;          // update counter
+      /// curvature
+      _data_eq[2].tab_eqs[CO_F+1]=n_index;                                    // table
+      _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs("CK");                // Navier-Stokes equation pointer
+      _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+      _data_eq[2].n_eqs++;                                               // number of quadratic system
+      n_index++;  // update counter     
+    }
+#endif
 
 
 #ifdef T_EQUATIONS  /// [4] Temperature -> 2 (T_EQUATIONS)
@@ -1090,11 +1112,13 @@ void MGSolDA::GenBc_loop(
           if(bc_id==bc_el) {
             if(i<n_u_dofs && bc_id==bc_el)   {
               for(int ivar=0; ivar<_nvars[2]; ivar++) {// quad el --
-                int kdof=_node_dof[_NoLevels-1][k+ivar* offset]; int tdof=  _node_dof[_NoLevels-1][k];
+                int kdof=_node_dof[_NoLevels-1][k+(ivar)* offset]; int tdof=  _node_dof[_NoLevels-1][k];
                 if(ivar+_dir == dir_maxnormal)  {  bc[1][kdof] =(bc_el/10)+10;}
                 else {   bc[1][kdof] =bc_el%10; }
               } // ----------------------------------------------------------------
             }
+            
+//             _node_dof[_NoLevels-1][i+(ivar+_dir)*offset]]
 //             if(i<n_l_dofs) { // Set the linear fields -----------------------------
 //               for(int ivarp=_nvars[2]; ivarp<(_nvars[1]+_nvars[2]); ivarp++) {
 //                 int kdof= _node_dof[_NoLevels-1][k+ (ivarp) * offset]; int tdof=  _node_dof[_NoLevels-1][k];
@@ -2059,7 +2083,7 @@ void MGSolDA::print_bc(std::string namefile, const int Level) {
   // print quad -------------------------------------
   for(int ivar=0; ivar<_nvars[2]; ivar++) {
     std::string var_name = _var_names[ivar]+"bd";
-    for(int i=0; i< n_nodes; i++) { sol[i]= bc[1][_node_dof[_NoLevels-1][i+ivar*offset]]; }
+    for(int i=0; i< n_nodes; i++) { sol[i]= bc[1][_node_dof[_NoLevels-1][i+(ivar)*offset]]; }
     _mgutils.print_Ihdf5(file_id,var_name,dimsf,sol);
     std::string var_name2 = _var_names[ivar]+"vl";
     for(int i=0; i< n_nodes; i++) { sol[i]= bc[0][_node_dof[_NoLevels-1][i+ivar*offset]]; }

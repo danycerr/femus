@@ -81,6 +81,16 @@ FEMUS::FEMUS(
 
   return;
 }
+
+#ifdef TBK_EQUATIONS
+void FEMUS::init_param(MGUtils &mgutils, TurbUtils &Parameters,int name){
+  _mg_utils=&mgutils;
+  _mg_utils->set_name(name);
+  _mg_utils->set_turbulence_info(Parameters);
+  return;
+}
+#endif
+
 // =======================================================================
 void FEMUS::init_param(
   MGUtils &   mgutils,
@@ -112,7 +122,7 @@ void FEMUS::init_fem(
 // This function is the destructor
 FEMUS::~FEMUS() {
   // ==========================================================================
-  delete _start;
+//   delete _start;
   delete _mg_time_loop;
 //   delete _mg_equations_map;
 //   delete _mg_utils;

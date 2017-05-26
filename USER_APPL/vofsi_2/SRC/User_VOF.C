@@ -35,7 +35,9 @@ void MGSolCC::ic_read(
 
 	  if(_name==1){
 // // 	     DrawShape2D::circle(tempc2,i,j,nadd,hx,hy,xc,yc,r);
-	    DrawShape2D::circle(tempc2,i,j,nadd,hx,hy,0.515,0.45,0.14);
+// 	    DrawShape2D::circle(tempc2,i,j,nadd,hx,hy,0.515,0.15,0.14);
+            
+              DrawShape2D::circle(tempc2,i,j,nadd,hx,hy,0.505,0.5,0.15);
 // 	    DrawShape2D::circle_hole_raw(_tempc2,i,j,nadd,hx,hy,0.5,0.5,0.05);
 	    
 // 	    DrawShape2D::rectangle(tempc2,i,j,hx,hy,0.0+hx,0.0+hy,0.41/*-0.0625*/,0.3);

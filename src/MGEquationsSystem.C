@@ -314,6 +314,10 @@ void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
   MGSolDS* mgsdsdz=new MGSolDS(*this,nvars_in,"SDSZ","dz"); 
   set_eqs(mgsdsdz);  set_num_eqs(mgsdsdz->_eqname,SDSZ_F);
 #endif
+
+
+#endif // ----------------  end  Disp ---------------------------------  
+
 //   #ifdef COLOR_EQUATIONS //   COLORS
 // // ====================================================================
 // //    if (_mgutils.get_file("MESHNUMBER")=="mesh1") {
@@ -322,10 +326,16 @@ void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
 //
 //   MGSolCOL* mgscol= new MGSolCOL(*this,nvars_in);   set_eqs(mgscol);
 // #endif // =================  end COLORS ==================================
-
-#endif // ----------------  end  Disp ---------------------------------  
-
-
+  #ifdef COLOR_EQUATIONS
+  for(int iname=0; iname<n_equations; iname++)
+    if(pbName[iname]== CO_F) {
+      nvars_in[0]=0;  nvars_in[1]=0; nvars_in[2]=1;  // only Quadratic[2] approx
+      MGSolCOL   *mgsCOL=new MGSolCOL(*this,nvars_in,"C","c"); set_eqs(mgsCOL);     // class def
+      set_num_eqs(mgsCOL->_eqname,CO_F);
+      MGSolCOL   *mgsKur=new MGSolCOL(*this,nvars_in,"CK","k"); set_eqs(mgsKur);     // class def
+      set_num_eqs(mgsKur->_eqname,CO_F+1);
+    }
+#endif
 
   // ====================================================================
 #ifdef FSIA_EQUATIONS //    FLUID-STRUCTURE adjoint---  FSI

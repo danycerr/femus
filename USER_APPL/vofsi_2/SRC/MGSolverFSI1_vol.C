@@ -112,6 +112,7 @@ void MGSolFSI::matrixrhs_liq_vol(
   double val_tbg[1];
   double vel_gddx[DIMENSION*DIMENSION*DIMENSION];
   double vel_gdx[DIMENSION*DIMENSION];
+  double gradk[DIMENSION];
   double vel_g[DIMENSION],u_nlg[DIMENSION]; 
  double ff[NDOF_FEM*DIMENSION];
    int ord[NDOF_FEM*DIMENSION];
@@ -141,16 +142,26 @@ void MGSolFSI::matrixrhs_liq_vol(
     if(_nvars[0]>0) { _fe[0]->get_phi_gl_g(_nNSdim,qp,_phi_g[0]);}  // piecewise shape function
 
     interp_el_sol(_xx_qnds,0,_nNSdim,_phi_g[2],el_ndof2,_xyzg);
-      _msolcc->get_2surten(_xyzg,ff,ord);
-        double cc=_msolcc->get_2phase(block,_xyzg); // new cc
-       rho =100.*cc*1+(1-cc)*1.;            // new cc 
-      double mu_tp= 1000.*cc+(1-cc)*1.;       // new cc
+//       _msolcc->get_2surten(_xyzg,ff,ord);
+
+//       cc=_ub_g[2][_FF_idx[CO_F]]
     // interpolation fields at gaussian points (qp) ---------------------------------------------------------------------------
 
     // quadratic fields (velocity)
     interp_el_sol(_data_eq[2].ub,0,_data_eq[2].indx_ub[_data_eq[2].n_eqs],_phi_g[2],el_ndof2,_ub_g[2]);    // field _ub_g[2][DIM]
     interp_el_gdx(u_old,0, _nNSdim,_dphi_g[2],el_ndof2,vel_gdx);    // derivatives  vel_gdx[DIM][DIM]
+    interp_el_gdx(_data_eq[2].ub,_FF_idx[CO_F], 1,_dphi_g[2],el_ndof2,gradk);    // derivatives  vel_gdx[DIM][DIM]
+// interp_el_gdx(_data_eq[2].ub,_FF_idx[CO_F]+1, 1,_dphi_g[2],el_ndof2,gradk);    // derivatives  vel_gdx[DIM][DIM]
     interp_el_gddx(u_old,0, _nNSdim,_ddphi_g[2],el_ndof2,vel_gddx);
+    
+    
+            double cc=_msolcc->get_2phase(block,_xyzg); // new cc
+         cc=_ub_g[2][_FF_idx[CO_F]];
+if(cc!=cc || cc<1.e-5) cc=0;
+         rho =100.*cc*1+(1-cc)*1.;            // new cc 
+      double mu_tp= 1000.*cc+(1-cc)*1.;       // new cc
+    
+    
     // linear fields (pressure) -> projection and segregated
 // #if (FSI_EQUATIONS%2==0)
 //     interp_el_sol(_data_eq[1].ub,0,2,_phi_g[1],el_ndofp,_ub_g[1]);
@@ -187,9 +198,9 @@ void MGSolFSI::matrixrhs_liq_vol(
     double f_upwind=rho*0.5*a_opt*h_eff/(mod2_vel);   // upwind
 
     // -------------------- Temperature[T_F] -> (quad,_indx_eqs[T_F]) -------------------------------------
-    if(_FF_idx[T_F]>=0) {
-      double Temp_g=_ub_g[2][_FF_idx[T_F]];   rho *= _FSIdensity(Temp_g,0);  mu *=  _FSIkviscosity(Temp_g,0);
-    }
+//     if(_FF_idx[T_F]>=0) {
+//       double Temp_g=_ub_g[2][_FF_idx[T_F]];   rho *= _FSIdensity(Temp_g,0);  mu *=  _FSIkviscosity(Temp_g,0);
+//     }
 
     _mu_turb=0.;// eff visc turb at g pt
     // -------------------- Turbulence [K_F] -> (quad,_indx_eqs[K_F]) -------------------------------------
@@ -230,6 +241,9 @@ void MGSolFSI::matrixrhs_liq_vol(
           FeM(indx)  +=  dtxJxW_g* (
                            unsteady_flag* rho*vel_g[ivar+_dir]*(phii_g+Phi_supg) /_dt     // time
                            + rho*_IFr*_dirg[ivar+_dir]* (phii_g+Phi_supg)   // x-gravity
+//                            +0.075*_ub_g[2][_FF_idx[CO_F]]*_ub_g[2][_FF_idx[CO_F]+1]*dphiidx_g2[ivar]
+//                            +0.075*gradk[ivar]*_ub_g[2][_FF_idx[CO_F]]* (phii_g+Phi_supg) 
+                           -0.075*gradk[ivar]*(_ub_g[2][_FF_idx[CO_F]+1])* (phii_g+Phi_supg) 
 #ifdef Nat_Conv
                            + rho* (_ub_g[2][T_idx]-_T_nc) *_grav[ivar+_dir]*_beta_mat* (phii_g+Phi_supg)
 #endif
@@ -252,7 +266,7 @@ void MGSolFSI::matrixrhs_liq_vol(
             Lap_g    += (IRe_eff+_FSI_parameter.UPWIND*f_upwind*u_nlg[kdim]*u_nlg[kdim]) *dphijdx_g2[kdim]*dphiidx_g2[kdim];
             Supg_lap += IRe_eff*_ddphi_g[2][j* _nNSdim* _nNSdim+kdim* _nNSdim+kdim];
           }
-           FeM(indx)  +=  dtxJxW_g*0.072*(ff[j+ivar*9]*phij_g)* (phii_g+Phi_supg);
+//            FeM(indx)  +=  dtxJxW_g*0.072*(ff[j+ivar*9]*phij_g)* (phii_g+Phi_supg);
           //--------------------------------- Diagonal blocks [1-5-9] ------------------------------------------------------
           KeM(indx,j+ivar*el_ndof2) +=dtxJxW_g*rho*i_flag_j* (
                                         (Adv_g+ unsteady_flag*phij_g/_dt)* (phii_g+Phi_supg) // time + advection

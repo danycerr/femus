@@ -10,7 +10,9 @@
 #include <map>
 #include <string>
 #include "hdf5.h"
-
+// #ifdef TBK_EQUATIONS
+#include "TurbUtils.h"
+// #endif
 // Forwarding class -------------------
 // class MGFiles;
 
@@ -38,6 +40,9 @@ public:
   std::string                       _fem_dir;       ///< FEM directory
   std::string                       _contrib_dir;   ///< FEM directory
 //------------------------------------------------------------------------
+// #ifdef TBK_EQUATIONS
+ TurbUtils                        *_TurbParameters;
+// #endif
   ///@}
   
 //   MGFiles&           _files;     ///< MGFiles class pointer
@@ -74,6 +79,11 @@ public:
     // _param_utils.insert(make_pair(name,value));
     _param_utils[name] = value;
   }
+// #ifdef TBK_EQUATIONS
+  inline void set_turbulence_info(TurbUtils &Parameters){
+    _TurbParameters =  &Parameters;
+  }
+// #endif
   ///@}
   //-----------------------------------------------------------------------------------------
   ///@{ \name READ-PRINT (IN CONSTRUCTOR)

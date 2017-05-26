@@ -1,11 +1,11 @@
 #include "Equations_conf.h"
 
 // ============================================
-#ifdef T_EQUATIONS // 3D-2D Energy equation
+#ifdef COLOR_EQUATIONS // 3D-2D Energy equation
 // ============================================
 
 // class local configuration -------
-#include "MGSolverT.h"
+#include "MGSolverCOL.h"
 #include "MGSclass_conf.h"
 
 // configuration files -----------
@@ -40,13 +40,13 @@
 
 
 // ======================================================
-/// This function constructs the 3d-2D MGSolT class
+/// This function constructs the 3d-2D MGSolCOL class
 // ==========================================================================
 /*! This constructor needs    MGEquationsSystem &mg_equations_map_in object to be constructed.
 * This equation has 1 quadratic variable (T) defined in nvars_in[]=(0,0,1),
 * equation name "T", basic variable name "T"
 */
-MGSolT::MGSolT(
+MGSolCOL::MGSolCOL(
   MGEquationsSystem &mg_equations_map_in, ///<  mg_equations_map_in pointer
   const int nvars_in[],                   ///< KLQ number of variables
   std::string eqname_in,                  ///< equation name
@@ -64,9 +64,20 @@ MGSolT::MGSolT(
   _kappa0(mg_equations_map_in.get_par("kappa0"))  // parameter  conductivity reference
   {//  =========================================================================
     
+    _var_names[0]=varname_in;
+    if (!varname_in.compare("c")) {
+        _dir=0;    // kappa
+        _refvalue[0]=_uref*_uref;
+    }
+    if (!varname_in.compare("k")) {
+        _dir=1;    // omega
+        _refvalue[0]=_uref*_uref*_uref/_lref;
+    }
+    
+    std::cout<<_dir<<"\n";
   /// A) reading parameters  for field coupling (in _FF_idx[])
   _nTdim=DIMENSION;
-  _euler_impl=_T_parameter.CRANK_NICK;
+  _euler_impl=_C_parameter.CRANK_NICK;
   for(int k_index=0; k_index<30; k_index++) { _FF_idx[k_index]=-1; }
   /// B) setting class variable name T (in _var_names[0]) and ref value T_ref (in _refvalue[0])
   _var_names[0]=varname_in;  _refvalue[0]=_Tref;
@@ -92,14 +103,14 @@ MGSolT::MGSolT(
 //  ===============================================================================================
 /// This function assembles the matrix and the rhs:
 //  ===============================================================================================
-void  MGSolT::GenMatRhs(
+void  MGSolCOL::GenMatRhs(
   const double    /**< time (in) */,
   const int Level /**< discretization Level (in) */,
   const int mode  /**< y/n assemble rhs  (1=rhs) (0=only matrix) (in)*/
 ) {  // ===============================================
 //   double Crank_Nicolson =1.;
   /// a) Set up
-  const int unsteady_flag=_T_parameter.UNSTEADY;
+  const int unsteady_flag=_C_parameter.UNSTEADY;
   // geometry ---------------------------------------------------------------------------------------
   const int  offset = _mgmesh._NoNodes[_NoLevels-1];   // mesh nodes
   const int  el_sides= _mgmesh._GeomEl._n_sides[0];    // element sides
@@ -218,18 +229,9 @@ void  MGSolT::GenMatRhs(
     //   3. Volume integration
     // ----------------------------------------------------------------------------------
     //  external cell properties -------------------------------------
-    if(_FF_idx[K_F]>=0) {         // distance from the wall (trubulence only) _y_dist=_mgmesh._dist[ iel+nel_b];
-      _y_dist=_T_parameter.DIST_FIX;// _y_dist=(x_m[0]>0.15)? 0.3-x_m[0] : x_m[0] ; //distance from wall//
-    }
-    if(_FF_idx[NS_F]>=0) {
-      for(int idim=0; idim< _nTdim; idim++) {
-        for(int d=0; d< NDOF_FEM; d++)  vel_g[idim] += _data_eq[2].ub[NDOF_FEM*(_FF_idx[NS_F]+idim)+d]/NDOF_FEM; 
-      }
-    } else {      vel_g[ _nTdim-1] = 0.; vel_g[0] = 1.; vel_g[1] = 1.;   }
 
     // volume integral
-    vol_integral(KeM,FeM,el_ndof2,el_ngauss,_xx_qnds,
-                 unsteady_flag, mode);
+    vol_integral(KeM,FeM,el_ndof2,el_ngauss,_xx_qnds, unsteady_flag, mode);
     //  std::cout << "Matrix\n" <<KeM <<std::endl; std::cout << "FeM\n "<<FeM <<std::endl;
     
    
@@ -267,7 +269,7 @@ void  MGSolT::GenMatRhs(
 
 // =========================================================================================
 /// This function controls the assembly and the solution of the T_equation system:
-void MGSolT::MGTimeStep(
+void MGSolCOL::MGTimeStep(
   const double time,  ///< time
   const int /*iter*/  ///< Number of max inter
 ) {
@@ -287,7 +289,7 @@ void MGSolT::MGTimeStep(
   std::cout << "  Assembly time -----> ="<< double(end_time- start_time) / CLOCKS_PER_SEC << " s "<< std::endl;
 #endif
 
-  /// C) Solution of the linear MGsystem (MGSolT::MGSolve).
+  /// C) Solution of the linear MGsystem (MGSolCOL::MGSolve).
     if(_mgutils.get_name() != 1){
   MGSolve(1.e-6,40);
     }
@@ -297,7 +299,7 @@ void MGSolT::MGTimeStep(
             << "s "<< std::endl;
 #endif
 
-  /// D) Update of the old solution at the top Level  (MGSolT::OldSol_update),
+  /// D) Update of the old solution at the top Level  (MGSolCOL::OldSol_update),
  x[_NoLevels-1]->localize(*x_old[_NoLevels-1]);
 
   return;
@@ -312,7 +314,7 @@ void MGSolT::MGTimeStep(
 // =====================================================
 #ifdef TBK_EQUATIONS
 // =====================================================
-void  MGSolT::f_mu(double val[]) {
+void  MGSolCOL::f_mu(double val[]) {
 
   if(_kappa_g[0]< 1.e-20) { _kappa_g[0]= 1.e-20; }  // kappa
   if(_kappa_g[1]< 1.e-20) { _kappa_g[1]= 1.e-20; }  // kappa
@@ -430,7 +432,7 @@ void  MGSolT::f_mu(double val[]) {
 #endif // ----------  end TBK_EQUATIONS  
 
 // =============================================================================================================
-// double   MGSolT::heff(double u_nlg_av[]) {
+// double   MGSolCOL::heff(double u_nlg_av[]) {
 // //  h_eff computation for SUPG, --------------------------------------------------------------------
 //   double  h_eff=1.e-20; double vdothmax_old=1.e-20;
 //   for(int lpt=0; lpt< NDOF_P; lpt++) {// -------->
@@ -447,7 +449,7 @@ void  MGSolT::f_mu(double val[]) {
 // }
 
 // =============================================================================================================
-// double   MGSolT::heff(double u_nlg_av[]) {
+// double   MGSolCOL::heff(double u_nlg_av[]) {
 // //  h_eff computation for SUPG, --------------------------------------------------------------------
 //   double  h_eff=1.e-20; double vdothmax_old=1.e-20;
 //   for(int lpt=0; lpt< NDOF_P; lpt++) {// -------->

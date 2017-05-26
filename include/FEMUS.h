@@ -26,7 +26,9 @@ class BoundInterp;
 #ifdef   TWO_PHASE
 class MGSolCC;
 #endif
-
+#ifdef TBK_EQUATIONS
+class TurbUtils;
+#endif
 
 class FEMUS {
   // ==========================================================================
@@ -64,6 +66,9 @@ public:
   // Constructor-Destructor
   FEMUS();
   FEMUS(MPI_Comm comm);
+  #ifdef TBK_EQUATIONS
+   void init_param(MGUtils &mgutils, TurbUtils &Parameters,int name=0 );
+#endif
   void init_param(MGUtils &mgutils, int name=0);
   void init_fem(MGGeomEl & mggeomel,MGFEMap & mgfemap);
   ~FEMUS();

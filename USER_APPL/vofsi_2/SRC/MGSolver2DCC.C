@@ -1015,6 +1015,10 @@ double MGSolCC::get_2phase(int blck,double xp[]) {
       int idl=ind+jj*(nxc+1)+ii+1;
       phase +=cc.Cmp[idl];
     }
+//     if(phase/(4.*blck*blck) != phase/(4.*blck*blck))
+//     {
+//       int a=12;
+//     }
   return phase/(4.*blck*blck);
 
 }

@@ -3,13 +3,13 @@
 #include "Equations_conf.h"
 
 // ============================================
-#ifdef T_EQUATIONS // 3D-2D Energy equation
+#ifdef COLOR_EQUATIONS // 3D-2D Energy equation
 // ============================================
 
 // class files --------------------------------------------------------------------------
 #include "MGSclass_conf.h"        // Navier-Stokes class conf file
-#include "MGSolverT.h"       // Navier-Stokes class header file
-#include "UserT.h"
+#include "MGSolverCOL.h"       // Navier-Stokes class header file
+#include "UserCOL.h"
 
 // config file --------------------------------------------------------------------------
 #include "MGGeomEl.h"        // Geometrical element
@@ -42,7 +42,7 @@
 /// This function generates the initial conditions for the energy equation:
 /// \ingroup  user_function ic_read
 // =================================================
-void MGSolT::ic_read(int bc_gam,int bc_mat, double xp[],int iel,double u_value[]) {
+void MGSolCOL::ic_read(int bc_gam,int bc_mat, double xp[],int iel,double u_value[]) {
 
 // =================================================
 #if DIMENSION==2
@@ -65,7 +65,7 @@ void MGSolT::ic_read(int bc_gam,int bc_mat, double xp[],int iel,double u_value[]
 // ========================================================
 /// This function  defines the boundary conditions for the energy equation:
 /// \ingroup  user_function bc_read
-void MGSolT::bc_read(int bc_gam,int bc_mat, double xp[],int bc_Neum[],int bc_flag[]) {
+void MGSolCOL::bc_read(int bc_gam,int bc_mat, double xp[],int bc_Neum[],int bc_flag[]) {
   // =================================================
 
 // enum bound_cond{
@@ -80,7 +80,7 @@ void MGSolT::bc_read(int bc_gam,int bc_mat, double xp[],int bc_Neum[],int bc_fla
   
 //    boundary conditions box plane_ch_rotate.med ==================================
 
-  bc_Neum[0]=Twall;
+  bc_Neum[0]=Twallc;
 //   if(bc_gam==11) {bc_Neum[0]=insulation;}    // top
 //   if(bc_gam==12) {bc_Neum[0]=heat_flux;/*simmetry;*/}    // left
 //   if(bc_gam==13) {bc_Neum[0]=heat_flux;}    // right
